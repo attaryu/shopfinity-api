@@ -31,6 +31,75 @@
 $ pnpm install
 ```
 
+## Prisma Setup
+
+This project uses Prisma 7 with the latest configuration format and PostgreSQL adapter.
+
+### Dependencies
+
+- `@prisma/client` - Prisma Client for database access
+- `@prisma/adapter-pg` - PostgreSQL adapter for Prisma 7
+- `pg` - PostgreSQL driver
+- `@types/pg` - TypeScript types for pg
+- `dotenv` - Environment variable management
+
+### Database Configuration
+
+1. Update the `DATABASE_URL` in the `.env` file with your database connection string:
+
+```
+DATABASE_URL="postgresql://user:password@localhost:5432/shopfinity?schema=public"
+```
+
+2. The database URL is configured in `prisma.config.ts`, which is the new Prisma 7 configuration file.
+
+3. The `PrismaService` uses `@prisma/adapter-pg` with a connection pool for optimal performance.
+
+### Prisma Commands
+
+```bash
+# Generate Prisma Client
+$ pnpm prisma generate
+
+# Create a migration
+$ pnpm prisma migrate dev --name init
+
+# Run migrations in production
+$ pnpm prisma migrate deploy
+
+# Open Prisma Studio (database GUI)
+$ pnpm prisma studio
+
+# Reset database
+$ pnpm prisma migrate reset
+```
+
+### Using Prisma in Your Code
+
+The `PrismaService` is available globally throughout the application. Inject it into any service:
+
+```typescript
+import { Injectable } from '@nestjs/common';
+import { PrismaService } from './prisma/prisma.service';
+
+@Injectable()
+export class UserService {
+  constructor(private prisma: PrismaService) {}
+
+  async findAll() {
+    return this.prisma.user.findMany();
+  }
+
+  async create(data: { email: string; name?: string }) {
+    return this.prisma.user.create({ data });
+  }
+}
+```
+
+### Schema Location
+
+The Prisma schema is located at `prisma/schema.prisma`. Edit this file to define your data models.
+
 ## Compile and run the project
 
 ```bash
