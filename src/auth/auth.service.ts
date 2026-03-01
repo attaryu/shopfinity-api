@@ -1,10 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import type { TokenPayload } from './types/token-payload';
+
+import { ConflictException, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 
-import { UserProfileResponseDto } from 'src/users/dto/user-profile-response.dto';
+import { User } from 'src/users/types/user';
 import { UsersService } from '../users/users.service';
-import { TokenPayload } from './types/token-payload';
+import { SignUpRequestDto } from './dto/request/sign-up-request.dto';
 
 @Injectable()
 export class AuthService {
@@ -20,17 +22,34 @@ export class AuthService {
       return null;
     }
 
-    const { password: hashedPassword, ...result } = user;
-    const isPasswordValid = await bcrypt.compare(password, hashedPassword);
+    const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
       return null;
     }
 
-    return result;
+    return {
+      id: user.id,
+      email: user.email,
+      fullname: user.fullname,
+      role: user.role,
+    };
   }
 
-  async login(user: UserProfileResponseDto) {
+  async signup(signUpDto: SignUpRequestDto) {
+    const existingUser = await this.usersService.findByEmail(signUpDto.email);
+
+    if (existingUser) {
+      throw new ConflictException('Email already registered');
+    }
+
+    return this.usersService.create({
+      ...signUpDto,
+      password: await bcrypt.hash(signUpDto.password, 10),
+    });
+  }
+
+  async login(user: Omit<User, 'password' | 'refreshToken'>) {
     const payload: TokenPayload = {
       sub: user.id,
       email: user.email,

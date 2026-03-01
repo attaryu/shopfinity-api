@@ -1,6 +1,7 @@
 import type { Response } from 'express';
 
 import {
+  Body,
   Controller,
   HttpCode,
   HttpStatus,
@@ -10,6 +11,10 @@ import {
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
+  ApiBody,
+  ApiConflictResponse,
+  ApiCreatedResponse,
+  ApiInternalServerErrorResponse,
   ApiOkResponse,
   ApiOperation,
   ApiTags,
@@ -17,16 +22,130 @@ import {
 } from '@nestjs/swagger';
 
 import { ControllerResponse } from 'src/common/types/controller-response';
-import { UserProfileResponseDto } from 'src/users/dto/user-profile-response.dto';
+import type { User } from 'src/users/types/user';
 import { AuthService } from './auth.service';
-import { User } from './decorators/user.decorator';
+import { User as UserDecorator } from './decorators/user.decorator';
+import { LoginRequestDto } from './dto/request/login-request.dto';
+import { SignUpRequestDto } from './dto/request/sign-up-request.dto';
 import { LoginResponseDto } from './dto/response/login-response.dto';
+import { SignupResponseDto } from './dto/response/signup-response.dto';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
+
+  @Post('sign-up')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({
+    summary: 'Register a new user',
+    description:
+      'Create a new user account with email, fullname, and password. The password will be securely hashed before storage.',
+  })
+  @ApiCreatedResponse({
+    description: 'User successfully registered',
+    type: SignupResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description: 'Invalid input data (validation failed)',
+    schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean', example: false },
+        statusCode: { type: 'number', example: 400 },
+        message: {
+          type: 'array',
+          items: { type: 'string' },
+          example: [
+            'email must be an email',
+            'fullname must be longer than or equal to 2 characters',
+            'password must be longer than or equal to 6 characters',
+          ],
+        },
+        data: { type: 'null', example: null },
+        error: {
+          type: 'object',
+          properties: {
+            type: { type: 'string', example: 'BadRequestException' },
+            details: {
+              type: 'array',
+              items: { type: 'string' },
+            },
+          },
+        },
+        meta: {
+          type: 'object',
+          properties: {
+            timestamp: { type: 'string', example: '2024-03-20T10:00:00Z' },
+          },
+        },
+      },
+    },
+  })
+  @ApiConflictResponse({
+    description: 'Email already registered',
+    schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean', example: false },
+        statusCode: { type: 'number', example: 409 },
+        message: { type: 'string', example: 'Email already registered' },
+        data: { type: 'null', example: null },
+        error: {
+          type: 'object',
+          properties: {
+            type: { type: 'string', example: 'ConflictException' },
+            details: { type: 'string', example: 'Email already registered' },
+          },
+        },
+        meta: {
+          type: 'object',
+          properties: {
+            timestamp: { type: 'string', example: '2024-03-20T10:00:00Z' },
+          },
+        },
+      },
+    },
+  })
+  @ApiInternalServerErrorResponse({
+    description: 'Internal server error',
+    schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean', example: false },
+        statusCode: { type: 'number', example: 500 },
+        message: { type: 'string', example: 'Failed to create user' },
+        data: { type: 'null', example: null },
+        error: {
+          type: 'object',
+          properties: {
+            type: {
+              type: 'string',
+              example: 'InternalServerErrorException',
+            },
+            details: { type: 'string', example: 'Failed to create user' },
+          },
+        },
+        meta: {
+          type: 'object',
+          properties: {
+            timestamp: { type: 'string', example: '2024-03-20T10:00:00Z' },
+          },
+        },
+      },
+    },
+  })
+  async signup(
+    @Body() signUpDto: SignUpRequestDto,
+  ): Promise<ControllerResponse> {
+    return {
+      message: 'User created successfully',
+      data: {
+        user: await this.authService.signup(signUpDto),
+      },
+    };
+  }
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
@@ -35,6 +154,10 @@ export class AuthController {
     summary: 'User login',
     description:
       'Authenticate user with email and password. Returns access token in response body and sets refresh token in HTTP-only cookie.',
+  })
+  @ApiBody({
+    type: LoginRequestDto,
+    description: 'User credentials for authentication',
   })
   @ApiOkResponse({
     description: 'User successfully authenticated',
@@ -98,7 +221,7 @@ export class AuthController {
     },
   })
   async login(
-    @User() user: UserProfileResponseDto,
+    @UserDecorator() user: User,
     @Res({ passthrough: true }) response: Response,
   ): Promise<ControllerResponse> {
     const result = await this.authService.login(user);
