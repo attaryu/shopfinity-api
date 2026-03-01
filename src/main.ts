@@ -30,6 +30,7 @@ void (async function () {
     .setTitle('Shopfinity API')
     .setDescription('The Shopfinity API documentation')
     .setVersion('1.0')
+    .addTag('auth', 'Authentication endpoints')
     .addTag('users', 'User management endpoints')
     .addBearerAuth()
     .build();

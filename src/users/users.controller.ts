@@ -1,3 +1,5 @@
+import type { ControllerResponse } from 'src/common/types/controller-response';
+
 import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
@@ -117,10 +119,14 @@ export class UsersController {
       },
     },
   })
-  async signup(@Body() createUserDto: CreateUserDto) {
+  async signup(
+    @Body() createUserDto: CreateUserDto,
+  ): Promise<ControllerResponse> {
     return {
       message: 'User created successfully',
-      data: await this.usersService.signup(createUserDto),
+      data: {
+        user: await this.usersService.signup(createUserDto),
+      },
     };
   }
 }

@@ -18,11 +18,12 @@ enum Role {
 }
 
 model User {
-  id       String @id @default(uuid())
-  fullname String
-  email    String @unique
-  password String
-  role     Role   @default(USER)
+  id           String  @id @default(uuid())
+  fullname     String
+  email        String  @unique
+  password     String
+  role         Role    @default(USER)
+  refreshToken String? @map("refresh_token")
 
   @@map("users")
 }

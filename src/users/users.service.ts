@@ -46,4 +46,17 @@ export class UsersService {
       throw new InternalServerErrorException('Failed to create user');
     }
   }
+
+  async findByEmail(email: string) {
+    return this.prisma.user.findUnique({
+      where: { email },
+    });
+  }
+
+  async storeRefreshToken(userId: string, refreshToken: string) {
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { refreshToken: await bcrypt.hash(refreshToken, 10) },
+    });
+  }
 }
