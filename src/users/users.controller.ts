@@ -7,6 +7,7 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
+
 import { CreateUserDto } from './dto/create-user.dto';
 import { SignupResponseDto } from './dto/signup-response.dto';
 import { UsersService } from './users.service';
@@ -32,6 +33,7 @@ export class UsersController {
     schema: {
       type: 'object',
       properties: {
+        success: { type: 'boolean', example: false },
         statusCode: { type: 'number', example: 400 },
         message: {
           type: 'array',
@@ -42,7 +44,23 @@ export class UsersController {
             'password must be longer than or equal to 6 characters',
           ],
         },
-        error: { type: 'string', example: 'Bad Request' },
+        data: { type: 'null', example: null },
+        error: {
+          type: 'object',
+          properties: {
+            type: { type: 'string', example: 'BadRequestException' },
+            details: {
+              type: 'array',
+              items: { type: 'string' },
+            },
+          },
+        },
+        meta: {
+          type: 'object',
+          properties: {
+            timestamp: { type: 'string', example: '2024-03-20T10:00:00Z' },
+          },
+        },
       },
     },
   })
@@ -51,9 +69,23 @@ export class UsersController {
     schema: {
       type: 'object',
       properties: {
+        success: { type: 'boolean', example: false },
         statusCode: { type: 'number', example: 409 },
         message: { type: 'string', example: 'Email already registered' },
-        error: { type: 'string', example: 'Conflict' },
+        data: { type: 'null', example: null },
+        error: {
+          type: 'object',
+          properties: {
+            type: { type: 'string', example: 'ConflictException' },
+            details: { type: 'string', example: 'Email already registered' },
+          },
+        },
+        meta: {
+          type: 'object',
+          properties: {
+            timestamp: { type: 'string', example: '2024-03-20T10:00:00Z' },
+          },
+        },
       },
     },
   })
@@ -62,18 +94,33 @@ export class UsersController {
     schema: {
       type: 'object',
       properties: {
+        success: { type: 'boolean', example: false },
         statusCode: { type: 'number', example: 500 },
         message: { type: 'string', example: 'Failed to create user' },
-        error: { type: 'string', example: 'Internal Server Error' },
+        data: { type: 'null', example: null },
+        error: {
+          type: 'object',
+          properties: {
+            type: {
+              type: 'string',
+              example: 'InternalServerErrorException',
+            },
+            details: { type: 'string', example: 'Failed to create user' },
+          },
+        },
+        meta: {
+          type: 'object',
+          properties: {
+            timestamp: { type: 'string', example: '2024-03-20T10:00:00Z' },
+          },
+        },
       },
     },
   })
   async signup(@Body() createUserDto: CreateUserDto) {
-    const user = await this.usersService.signup(createUserDto);
-
     return {
       message: 'User created successfully',
-      data: { user },
+      data: await this.usersService.signup(createUserDto),
     };
   }
 }

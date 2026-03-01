@@ -1,11 +1,20 @@
-import 'dotenv/config';
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import 'dotenv/config';
+
 import { AppModule } from './app.module';
+import { HttpExceptionFilter } from './common/filters/http-exception.filter';
+import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 
 void (async function () {
   const app = await NestFactory.create(AppModule);
+
+  // Enable global exception filter
+  app.useGlobalFilters(new HttpExceptionFilter());
+
+  // Enable global response interceptor
+  app.useGlobalInterceptors(new ResponseInterceptor());
 
   // Enable validation globally
   app.useGlobalPipes(

@@ -4,7 +4,7 @@ import { PrismaClient } from '@prisma/client';
 import { Pool } from 'pg';
 
 @Injectable()
-export class PrismaService
+export class PrismaProvider
   extends PrismaClient
   implements OnModuleInit, OnModuleDestroy
 {
@@ -13,6 +13,7 @@ export class PrismaService
       connectionString: process.env.DATABASE_URL,
     });
     const adapter = new PrismaPg(pool);
+
     super({ adapter });
   }
 

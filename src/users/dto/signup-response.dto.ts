@@ -27,7 +27,7 @@ export class UserDataDto {
   role: string;
 }
 
-export class SignupDataDto {
+export class SignupDataWrapperDto {
   @ApiProperty({
     type: UserDataDto,
     description: 'The created user data',
@@ -35,7 +35,27 @@ export class SignupDataDto {
   user: UserDataDto;
 }
 
+export class MetaDto {
+  @ApiProperty({
+    example: '2024-03-20T10:00:00Z',
+    description: 'Timestamp of the response',
+  })
+  timestamp: string;
+}
+
 export class SignupResponseDto {
+  @ApiProperty({
+    example: true,
+    description: 'Indicates if the operation was successful',
+  })
+  success: boolean;
+
+  @ApiProperty({
+    example: 201,
+    description: 'HTTP status code',
+  })
+  statusCode: number;
+
   @ApiProperty({
     example: 'User created successfully',
     description: 'Success message',
@@ -43,8 +63,21 @@ export class SignupResponseDto {
   message: string;
 
   @ApiProperty({
-    type: SignupDataDto,
+    type: SignupDataWrapperDto,
     description: 'Response data containing user information',
   })
-  data: SignupDataDto;
+  data: SignupDataWrapperDto;
+
+  @ApiProperty({
+    example: null,
+    description: 'Error details (null if successful)',
+    nullable: true,
+  })
+  error?: any;
+
+  @ApiProperty({
+    type: MetaDto,
+    description: 'Metadata including timestamp',
+  })
+  meta: MetaDto;
 }

@@ -5,12 +5,12 @@ import {
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaProvider } from '../common/providers/prisma.provider';
 import { CreateUserDto } from './dto/create-user.dto';
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaProvider) {}
 
   async signup(createUserDto: CreateUserDto) {
     const { email, fullname, password } = createUserDto;
