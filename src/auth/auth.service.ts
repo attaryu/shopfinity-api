@@ -79,4 +79,8 @@ export class AuthService {
       refreshToken,
     };
   }
+
+  async logout(userId: string) {
+    return this.usersService.clearRefreshToken(userId);
+  }
 }

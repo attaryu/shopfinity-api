@@ -30,7 +30,7 @@ export class ResponseInterceptor<T> implements NestInterceptor<
           success: true,
           statusCode: response.statusCode,
           message: controllerResponse.message ?? 'Operation successful',
-          data: controllerResponse.data,
+          data: controllerResponse.data ?? null,
           error: null,
           meta: {
             timestamp: new Date().toISOString(),

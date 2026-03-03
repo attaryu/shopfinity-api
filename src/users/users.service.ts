@@ -43,4 +43,23 @@ export class UsersService {
       data: { refreshToken: await bcrypt.hash(refreshToken, 10) },
     });
   }
+
+  async clearRefreshToken(userId: string) {
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { refreshToken: null },
+    });
+  }
+
+  async findById(userId: string) {
+    return this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        fullname: true,
+        role: true,
+      },
+    });
+  }
 }

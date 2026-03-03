@@ -8,9 +8,11 @@ import {
   Post,
   Res,
   UseGuards,
+  Delete,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
+  ApiBearerAuth,
   ApiBody,
   ApiConflictResponse,
   ApiCreatedResponse,
@@ -29,6 +31,7 @@ import { LoginRequestDto } from './dto/request/login-request.dto';
 import { SignUpRequestDto } from './dto/request/sign-up-request.dto';
 import { LoginResponseDto } from './dto/response/login-response.dto';
 import { SignupResponseDto } from './dto/response/signup-response.dto';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 
 @ApiTags('auth')
@@ -243,5 +246,73 @@ export class AuthController {
         accessToken: result.accessToken,
       },
     };
+  }
+
+  @Delete('logout')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'User logout',
+    description:
+      'Logout user by clearing refresh token from database and removing cookie. Requires valid JWT access token.',
+  })
+  @ApiOkResponse({
+    description: 'User successfully logged out',
+    schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean', example: true },
+        statusCode: { type: 'number', example: 200 },
+        message: { type: 'string', example: 'Logout successful' },
+        data: { type: 'null', example: null },
+        error: { type: 'null', example: null },
+        meta: {
+          type: 'object',
+          properties: {
+            timestamp: { type: 'string', example: '2024-03-20T10:00:00Z' },
+          },
+        },
+      },
+    },
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Invalid or missing token',
+    schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean', example: false },
+        statusCode: { type: 'number', example: 401 },
+        message: { type: 'string', example: 'Unauthorized' },
+        data: { type: 'null', example: null },
+        error: {
+          type: 'object',
+          properties: {
+            type: { type: 'string', example: 'UnauthorizedException' },
+            details: { type: 'string', example: 'Unauthorized' },
+          },
+        },
+        meta: {
+          type: 'object',
+          properties: {
+            timestamp: { type: 'string', example: '2024-03-20T10:00:00Z' },
+          },
+        },
+      },
+    },
+  })
+  async logout(
+    @UserDecorator() user: User,
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<ControllerResponse> {
+    await this.authService.logout(user.id);
+
+    response.clearCookie('refreshToken', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+    });
+
+    return { message: 'Logout successful' };
   }
 }
