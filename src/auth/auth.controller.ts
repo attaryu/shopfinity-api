@@ -1,4 +1,4 @@
-import type { Response } from 'express';
+import type { Request, Response } from 'express';
 
 import {
   Body,
@@ -6,7 +6,9 @@ import {
   HttpCode,
   HttpStatus,
   Post,
+  Req,
   Res,
+  UnauthorizedException,
   UseGuards,
   Delete,
 } from '@nestjs/common';
@@ -15,6 +17,7 @@ import {
   ApiBearerAuth,
   ApiBody,
   ApiConflictResponse,
+  ApiCookieAuth,
   ApiCreatedResponse,
   ApiInternalServerErrorResponse,
   ApiOkResponse,
@@ -314,5 +317,116 @@ export class AuthController {
     });
 
     return { message: 'Logout successful' };
+  }
+
+  @Post('refresh')
+  @HttpCode(HttpStatus.OK)
+  @ApiCookieAuth('refreshToken')
+  @ApiOperation({
+    summary: 'Refresh access token',
+    description:
+      'Generate a new access token using the refresh token stored in HTTP-only cookie. Implements refresh token rotation for enhanced security - the old refresh token is invalidated and a new one is issued.',
+  })
+  @ApiOkResponse({
+    description: 'Tokens refreshed successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean', example: true },
+        statusCode: { type: 'number', example: 200 },
+        message: { type: 'string', example: 'Token refreshed successfully' },
+        data: {
+          type: 'object',
+          properties: {
+            accessToken: {
+              type: 'string',
+              example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+            },
+            user: {
+              type: 'object',
+              properties: {
+                id: {
+                  type: 'string',
+                  example: 'e81705aa-f97e-4483-84bb-0874efac878a',
+                },
+                email: { type: 'string', example: 'user@shopfinity.com' },
+                fullname: { type: 'string', example: 'Test User' },
+                role: { type: 'string', example: 'USER' },
+              },
+            },
+          },
+        },
+        error: { type: 'null', example: null },
+        meta: {
+          type: 'object',
+          properties: {
+            timestamp: { type: 'string', example: '2024-03-20T10:00:00Z' },
+          },
+        },
+      },
+    },
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Invalid or expired refresh token',
+    schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean', example: false },
+        statusCode: { type: 'number', example: 401 },
+        message: {
+          type: 'string',
+          example: 'Invalid or expired refresh token',
+        },
+        data: { type: 'null', example: null },
+        error: {
+          type: 'object',
+          properties: {
+            type: { type: 'string', example: 'UnauthorizedException' },
+            details: {
+              type: 'string',
+              example: 'Invalid or expired refresh token',
+            },
+          },
+        },
+        meta: {
+          type: 'object',
+          properties: {
+            timestamp: { type: 'string', example: '2024-03-20T10:00:00Z' },
+          },
+        },
+      },
+    },
+  })
+  async refresh(
+    @Req() request: Request,
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<ControllerResponse> {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    const refreshToken = request.cookies['refreshToken'] as string | undefined;
+
+    if (!refreshToken) {
+      throw new UnauthorizedException('Refresh token not found');
+    }
+
+    const result = await this.authService.refreshToken(refreshToken);
+
+    // Set new refresh token in cookie (rotation)
+    const refreshTokenExpiration = process.env.JWT_REFRESH_DURATION;
+    response.cookie('refreshToken', result.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: refreshTokenExpiration
+        ? parseInt(refreshTokenExpiration, 10)
+        : 7 * 24 * 60 * 60 * 1000,
+    });
+
+    return {
+      message: 'Token refreshed successfully',
+      data: {
+        user: result.user,
+        accessToken: result.accessToken,
+      },
+    };
   }
 }

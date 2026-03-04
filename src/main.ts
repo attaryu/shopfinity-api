@@ -1,6 +1,7 @@
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import cookieParser from 'cookie-parser';
 import 'dotenv/config';
 
 import { AppModule } from './app.module';
@@ -9,6 +10,9 @@ import { ResponseInterceptor } from './common/interceptors/response.interceptor'
 
 void (async function () {
   const app = await NestFactory.create(AppModule);
+
+  // Enable cookie parser
+  app.use(cookieParser());
 
   // Enable global exception filter
   app.useGlobalFilters(new HttpExceptionFilter());
@@ -33,6 +37,12 @@ void (async function () {
     .addTag('auth', 'Authentication endpoints')
     .addTag('users', 'User management endpoints')
     .addBearerAuth()
+    .addCookieAuth('refreshToken', {
+      type: 'apiKey',
+      in: 'cookie',
+      name: 'refreshToken',
+      description: 'HTTP-only cookie containing the refresh token',
+    })
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
@@ -43,7 +53,8 @@ void (async function () {
   });
 
   app.enableCors({
-    origin: process.env.CORS_ORIGIN || '*',
+    origin: process.env.CORS_ORIGIN ?? 'http://localhost:3000',
+    credentials: true,
   });
 
   await app.listen(process.env.PORT ?? 3000);

@@ -62,4 +62,23 @@ export class UsersService {
       },
     });
   }
+
+  async findByIdWithRefreshToken(userId: string): Promise<{
+    id: string;
+    email: string;
+    fullname: string;
+    role: string;
+    refreshToken: string | null;
+  } | null> {
+    return this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        fullname: true,
+        role: true,
+        refreshToken: true,
+      },
+    });
+  }
 }

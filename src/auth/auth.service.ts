@@ -1,6 +1,10 @@
 import type { TokenPayload } from './types/token-payload';
 
-import { ConflictException, Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 
@@ -82,5 +86,77 @@ export class AuthService {
 
   async logout(userId: string) {
     return this.usersService.clearRefreshToken(userId);
+  }
+
+  async refreshToken(oldRefreshToken: string) {
+    try {
+      // Verify the refresh token
+      const payload = await this.jwtService.verifyAsync<TokenPayload>(
+        oldRefreshToken,
+        {
+          secret: process.env.JWT_REFRESH_SECRET ?? 'default-refresh-secret',
+        },
+      );
+
+      // Find user with refresh token
+      const user = await this.usersService.findByIdWithRefreshToken(
+        payload.sub,
+      );
+
+      if (!user || !user.refreshToken) {
+        throw new UnauthorizedException('Invalid refresh token');
+      }
+
+      // Verify that the stored refresh token matches the provided one
+      const isRefreshTokenValid = await bcrypt.compare(
+        oldRefreshToken,
+        user.refreshToken,
+      );
+
+      if (!isRefreshTokenValid) {
+        throw new UnauthorizedException('Invalid refresh token');
+      }
+
+      // Generate new tokens (refresh token rotation)
+      const newPayload: TokenPayload = {
+        sub: user.id,
+        email: user.email,
+        role: user.role,
+      };
+
+      const accessToken = await this.jwtService.signAsync<TokenPayload>(
+        newPayload,
+        {
+          secret: process.env.JWT_ACCESS_SECRET ?? 'default-secret',
+          expiresIn:
+            (process.env.JWT_ACCESS_EXPIRATION as unknown as number) ?? '15m',
+        },
+      );
+
+      const newRefreshToken = await this.jwtService.signAsync<TokenPayload>(
+        newPayload,
+        {
+          secret: process.env.JWT_REFRESH_SECRET ?? 'default-refresh-secret',
+          expiresIn:
+            (process.env.JWT_REFRESH_EXPIRATION as unknown as number) ?? '7d',
+        },
+      );
+
+      // Store new refresh token (rotation)
+      await this.usersService.storeRefreshToken(user.id, newRefreshToken);
+
+      return {
+        user: {
+          id: user.id,
+          email: user.email,
+          fullname: user.fullname,
+          role: user.role,
+        },
+        accessToken,
+        refreshToken: newRefreshToken,
+      };
+    } catch {
+      throw new UnauthorizedException('Invalid or expired refresh token');
+    }
   }
 }
