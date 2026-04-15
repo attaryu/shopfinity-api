@@ -6,6 +6,7 @@ import { AppService } from './app.service';
 import { AuthModule } from './modules/auth/auth.module';
 import { ProvidersModule } from './common/providers/providers.module';
 import { UsersModule } from './modules/users/users.module';
+import { CategoriesModule } from './modules/categories/categories.module';
 import { envValidationSchema } from './config/env.validation';
 
 @Module({
@@ -17,6 +18,7 @@ import { envValidationSchema } from './config/env.validation';
     ProvidersModule,
     UsersModule,
     AuthModule,
+    CategoriesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
