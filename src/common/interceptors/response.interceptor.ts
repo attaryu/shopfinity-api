@@ -34,7 +34,9 @@ export class ResponseInterceptor<T> implements NestInterceptor<
           error: null,
           meta: {
             timestamp: new Date().toISOString(),
+            ...controllerResponse.meta,
           },
+
         };
       }),
     );

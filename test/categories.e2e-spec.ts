@@ -291,8 +291,9 @@ describe('CategoriesController (e2e)', () => {
 
       expect(response.body.success).toBe(true);
       expect(response.body.data.categories.length).toBe(2);
-      expect(response.body.data.meta).toBeDefined();
-      expect(response.body.data.meta.totalItems).toBeDefined();
+      expect(response.body.meta).toBeDefined();
+      expect(response.body.meta.totalItems).toBeDefined();
+
     });
   });
 

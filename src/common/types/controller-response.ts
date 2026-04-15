@@ -1,4 +1,6 @@
-export interface ControllerResponse<T = Record<string, unknown>> {
+export interface ControllerResponse<T = any> {
   message: string;
   data?: T | null;
+  meta?: any;
 }
+

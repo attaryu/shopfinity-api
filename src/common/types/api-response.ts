@@ -12,14 +12,12 @@ export interface ErrorDetail {
   details?: string | string[] | Record<string, any>;
 }
 
-export interface MetaData {
+export interface MetaData extends Record<string, any> {
   timestamp: string;
-  pagination?: PaginationMetaData;
+  totalItems?: number;
+  itemCount?: number;
+  itemsPerPage?: number;
+  totalPages?: number;
+  currentPage?: number;
 }
 
-export interface PaginationMetaData {
-  page: number;
-  limit: number;
-  total: number;
-  totalPages: number;
-}

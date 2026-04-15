@@ -26,9 +26,12 @@ import { RolesGuard } from 'src/core/guards/roles.guard';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { ControllerResponse } from 'src/common/types/controller-response';
 import { CategoriesService } from './categories.service';
-import { CreateCategoryDto } from './dto/create-category.dto';
-import { UpdateCategoryDto } from './dto/update-category.dto';
-import { ListCategoriesQueryDto } from './dto/list-categories-query.dto';
+import { CreateCategoryDto } from './dto/request/create-category.dto';
+import { UpdateCategoryDto } from './dto/request/update-category.dto';
+import { ListCategoriesQueryDto } from './dto/request/list-categories-query.dto';
+import { CategoryListResponseDto } from './dto/response/category-list-response.dto';
+import { SingleCategoryResponseDto } from './dto/response/single-category-response.dto';
+
 
 @ApiTags('categories')
 @Controller('categories')
@@ -53,21 +56,30 @@ export class CategoriesController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'List all categories with pagination, search, and sort' })
-  @ApiOkResponse({ description: 'Categories retrieved successfully' })
+  @ApiOperation({
+    summary: 'List all categories with pagination, search, and sort',
+  })
+  @ApiOkResponse({
+    description: 'Categories retrieved successfully',
+    type: CategoryListResponseDto,
+  })
   async findAll(
     @Query() query: ListCategoriesQueryDto,
   ): Promise<ControllerResponse> {
     const result = await this.categoriesService.findAllPaginated(query);
     return {
       message: 'Categories retrieved successfully',
-      data: result,
+      data: { categories: result.categories },
+      meta: result.meta,
     };
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get a category by ID' })
-  @ApiOkResponse({ description: 'Category retrieved successfully' })
+  @ApiOkResponse({
+    description: 'Category retrieved successfully',
+    type: SingleCategoryResponseDto,
+  })
   async findOne(
     @Param('id', ParseIntPipe) id: number,
   ): Promise<ControllerResponse> {
