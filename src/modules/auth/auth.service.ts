@@ -6,9 +6,10 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 
-import { User } from 'src/users/types/user';
+import { User } from 'src/modules/users/types/user';
 import { UsersService } from '../users/users.service';
 import { SignUpRequestDto } from './dto/request/sign-up-request.dto';
 
@@ -17,6 +18,7 @@ export class AuthService {
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
+    private configService: ConfigService,
   ) {}
 
   async validateUser(email: string, password: string) {
@@ -47,9 +49,11 @@ export class AuthService {
       throw new ConflictException('Email already registered');
     }
 
+    const hashedPassword = await bcrypt.hash(signUpDto.password, 10);
     return this.usersService.create({
-      ...signUpDto,
-      password: await bcrypt.hash(signUpDto.password, 10),
+      email: signUpDto.email,
+      fullname: signUpDto.fullname,
+      password: hashedPassword,
     });
   }
 
@@ -61,21 +65,20 @@ export class AuthService {
     };
 
     const accessToken = await this.jwtService.signAsync<TokenPayload>(payload, {
-      secret: process.env.JWT_ACCESS_SECRET ?? 'default-secret',
-      expiresIn:
-        (process.env.JWT_ACCESS_EXPIRATION as unknown as number) ?? '15m',
+      secret: this.configService.get<string>('JWT_ACCESS_SECRET') ?? 'default-secret',
+      expiresIn: (this.configService.get<string>('JWT_ACCESS_EXPIRATION') ?? '15m') as any,
     });
 
     const refreshToken = await this.jwtService.signAsync<TokenPayload>(
       payload,
       {
-        secret: process.env.JWT_REFRESH_SECRET ?? 'default-refresh-secret',
-        expiresIn:
-          (process.env.JWT_REFRESH_EXPIRATION as unknown as number) ?? '7d',
+        secret: this.configService.get<string>('JWT_REFRESH_SECRET') ?? 'default-refresh-secret',
+        expiresIn: (this.configService.get<string>('JWT_REFRESH_EXPIRATION') ?? '7d') as any,
       },
     );
 
-    await this.usersService.storeRefreshToken(user.id, refreshToken);
+    const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
+    await this.usersService.storeRefreshToken(user.id, hashedRefreshToken);
 
     return {
       user,
@@ -94,7 +97,7 @@ export class AuthService {
       const payload = await this.jwtService.verifyAsync<TokenPayload>(
         oldRefreshToken,
         {
-          secret: process.env.JWT_REFRESH_SECRET ?? 'default-refresh-secret',
+          secret: this.configService.get<string>('JWT_REFRESH_SECRET') ?? 'default-refresh-secret',
         },
       );
 
@@ -127,23 +130,22 @@ export class AuthService {
       const accessToken = await this.jwtService.signAsync<TokenPayload>(
         newPayload,
         {
-          secret: process.env.JWT_ACCESS_SECRET ?? 'default-secret',
-          expiresIn:
-            (process.env.JWT_ACCESS_EXPIRATION as unknown as number) ?? '15m',
+          secret: this.configService.get<string>('JWT_ACCESS_SECRET') ?? 'default-secret',
+          expiresIn: (this.configService.get<string>('JWT_ACCESS_EXPIRATION') ?? '15m') as any,
         },
       );
 
       const newRefreshToken = await this.jwtService.signAsync<TokenPayload>(
         newPayload,
         {
-          secret: process.env.JWT_REFRESH_SECRET ?? 'default-refresh-secret',
-          expiresIn:
-            (process.env.JWT_REFRESH_EXPIRATION as unknown as number) ?? '7d',
+          secret: this.configService.get<string>('JWT_REFRESH_SECRET') ?? 'default-refresh-secret',
+          expiresIn: (this.configService.get<string>('JWT_REFRESH_EXPIRATION') ?? '7d') as any,
         },
       );
 
       // Store new refresh token (rotation)
-      await this.usersService.storeRefreshToken(user.id, newRefreshToken);
+      const hashedRefreshToken = await bcrypt.hash(newRefreshToken, 10);
+      await this.usersService.storeRefreshToken(user.id, hashedRefreshToken);
 
       return {
         user: {

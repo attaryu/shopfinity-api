@@ -13,8 +13,8 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 
-import { User } from 'src/auth/decorators/user.decorator';
-import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { User } from 'src/common/decorators/user.decorator';
+import { JwtAuthGuard } from 'src/core/guards/jwt-auth.guard';
 import { ControllerResponse } from 'src/common/types/controller-response';
 import { UsersService } from './users.service';
 import type { User as UserType } from './types/user';
