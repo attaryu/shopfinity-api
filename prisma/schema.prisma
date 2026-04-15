@@ -56,6 +56,7 @@ model Product {
   description String
   price       Float
   stock       Int
+  imageUrl    String   @map("image_url")
   categoryId  Int      @map("category_id")
   brandId     Int      @map("brand_id")
   createdAt   DateTime @default(now()) @map("created_at")
