@@ -12,5 +12,33 @@ export class BrandsRepository {
     });
   }
 
-  // Future methods like findAll, findById, etc. can be added here
+  async findPaginated(params: {
+    skip?: number;
+    take?: number;
+    where?: any;
+    orderBy?: any;
+  }) {
+    const { skip, take, where, orderBy } = params;
+    return this.prisma.brand.findMany({
+      skip,
+      take,
+      where,
+      orderBy,
+      include: {
+        _count: {
+          select: { products: true },
+        },
+      },
+    });
+  }
+
+  async countAll(where?: any) {
+    return this.prisma.brand.count({ where });
+  }
+
+  async findById(id: number) {
+    return this.prisma.brand.findUnique({
+      where: { id },
+    });
+  }
 }

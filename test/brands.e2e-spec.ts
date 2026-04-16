@@ -29,6 +29,13 @@ describe('BrandsController (e2e)', () => {
     logoUrl: `brand/apple-logo-${timestamp}.png`,
   };
 
+  let createdBrandId: number;
+  const initialBrand = {
+    name: 'Initial Brand',
+    slug: 'initial-brand',
+    logoUrl: 'brand/initial-logo.png',
+  };
+
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
@@ -54,7 +61,7 @@ describe('BrandsController (e2e)', () => {
     // Clean any lingering from past failures
     await prisma.brand.deleteMany({
       where: {
-        OR: [{ name: newBrand.name }, { slug: newBrand.slug }],
+        OR: [{ name: newBrand.name }, { slug: newBrand.slug }, { name: initialBrand.name }],
       },
     });
 
@@ -85,12 +92,18 @@ describe('BrandsController (e2e)', () => {
       .expect(200);
 
     adminAccessToken = loginResponse.body.data.accessToken;
+
+    // Seed a brand for retrieval tests
+    const brand = await prisma.brand.create({
+      data: initialBrand,
+    });
+    createdBrandId = brand.id;
   });
 
   afterAll(async () => {
     await prisma.brand.deleteMany({
       where: {
-        OR: [{ name: newBrand.name }, { slug: newBrand.slug }],
+        OR: [{ name: newBrand.name }, { slug: newBrand.slug }, { name: initialBrand.name }],
       },
     });
     await prisma.user.deleteMany({
@@ -146,6 +159,87 @@ describe('BrandsController (e2e)', () => {
         .expect(401);
 
       expect(response.body.success).toBe(false);
+    });
+  });
+
+  describe('/brands/:id (GET) - Single Brand', () => {
+    it('should successfully retrieve a brand by id', async () => {
+      const response = await request(app.getHttpServer())
+        .get(`/brands/${createdBrandId}`)
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.brand.id).toBe(createdBrandId);
+      expect(response.body.data.brand.name).toBe(initialBrand.name);
+    });
+
+    it('should fail if brand does not exist', async () => {
+      const response = await request(app.getHttpServer())
+        .get('/brands/999999')
+        .expect(404);
+
+      expect(response.body.success).toBe(false);
+    });
+  });
+
+  describe('/brands (GET) - List Brands', () => {
+    beforeAll(async () => {
+      // Seed extra brands for listing tests
+      await prisma.brand.createMany({
+        data: [
+          { name: 'Samsung', slug: 'samsung', logoUrl: 'brand/samsung.png' },
+          { name: 'Sony', slug: 'sony', logoUrl: 'brand/sony.png' },
+          { name: 'Nike', slug: 'nike', logoUrl: 'brand/nike.png' },
+        ],
+      });
+    });
+
+    afterAll(async () => {
+      await prisma.brand.deleteMany({
+        where: {
+          slug: { in: ['samsung', 'sony', 'nike'] },
+        },
+      });
+    });
+
+    it('should list brands with default pagination', async () => {
+      const response = await request(app.getHttpServer())
+        .get('/brands')
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(Array.isArray(response.body.data.brands)).toBe(true);
+      expect(response.body.data.brands.length).toBeGreaterThanOrEqual(4); // 3 seeded + 1 initial
+      expect(response.body.meta).toBeDefined();
+    });
+
+    it('should filter brands by search term', async () => {
+      const response = await request(app.getHttpServer())
+        .get('/brands?search=Samsung')
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.brands[0].name).toBe('Samsung');
+    });
+
+    it('should sort brands by name desc', async () => {
+      const response = await request(app.getHttpServer())
+        .get('/brands?sortBy=name&sortOrder=desc')
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      const names = response.body.data.brands.map((b: any) => b.name);
+      expect(names[0].localeCompare(names[1])).toBeGreaterThanOrEqual(0);
+    });
+
+    it('should paginate results', async () => {
+      const response = await request(app.getHttpServer())
+        .get('/brands?limit=2&page=1')
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.brands.length).toBe(2);
+      expect(response.body.meta.currentPage).toBe(1);
     });
   });
 });
