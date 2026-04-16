@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaProvider } from 'src/common/providers/prisma.provider';
 import { CreateBrandDto } from './dto/request/create-brand.dto';
+import { UpdateBrandDto } from './dto/request/update-brand.dto';
 
 @Injectable()
 export class BrandsRepository {
@@ -38,6 +39,19 @@ export class BrandsRepository {
 
   async findById(id: number) {
     return this.prisma.brand.findUnique({
+      where: { id },
+    });
+  }
+
+  async update(id: number, updateBrandDto: UpdateBrandDto) {
+    return this.prisma.brand.update({
+      where: { id },
+      data: updateBrandDto,
+    });
+  }
+
+  async delete(id: number) {
+    return this.prisma.brand.delete({
       where: { id },
     });
   }

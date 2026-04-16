@@ -29,6 +29,12 @@ describe('BrandsController (e2e)', () => {
     logoUrl: `brand/apple-logo-${timestamp}.png`,
   };
 
+  const updateBrandDto = {
+    name: 'Updated Brand',
+    slug: 'updated-brand',
+    logoUrl: 'brand/updated-logo.png',
+  };
+
   let createdBrandId: number;
   const initialBrand = {
     name: 'Initial Brand',
@@ -61,7 +67,7 @@ describe('BrandsController (e2e)', () => {
     // Clean any lingering from past failures
     await prisma.brand.deleteMany({
       where: {
-        OR: [{ name: newBrand.name }, { slug: newBrand.slug }, { name: initialBrand.name }],
+        OR: [{ name: newBrand.name }, { slug: newBrand.slug }, { name: initialBrand.name }, { name: updateBrandDto.name }],
       },
     });
 
@@ -93,7 +99,7 @@ describe('BrandsController (e2e)', () => {
 
     adminAccessToken = loginResponse.body.data.accessToken;
 
-    // Seed a brand for retrieval tests
+    // Seed a brand for retrieval and update tests
     const brand = await prisma.brand.create({
       data: initialBrand,
     });
@@ -103,7 +109,7 @@ describe('BrandsController (e2e)', () => {
   afterAll(async () => {
     await prisma.brand.deleteMany({
       where: {
-        OR: [{ name: newBrand.name }, { slug: newBrand.slug }, { name: initialBrand.name }],
+        OR: [{ name: newBrand.name }, { slug: newBrand.slug }, { name: initialBrand.name }, { name: updateBrandDto.name }],
       },
     });
     await prisma.user.deleteMany({
@@ -240,6 +246,87 @@ describe('BrandsController (e2e)', () => {
       expect(response.body.success).toBe(true);
       expect(response.body.data.brands.length).toBe(2);
       expect(response.body.meta.currentPage).toBe(1);
+    });
+  });
+
+  describe('/brands/:id (PUT/PATCH) - Update Brand', () => {
+    it('should successfully update a brand as admin (PUT)', async () => {
+      const response = await request(app.getHttpServer())
+        .put(`/brands/${createdBrandId}`)
+        .set('Authorization', `Bearer ${adminAccessToken}`)
+        .send(updateBrandDto)
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.brand.id).toBe(createdBrandId);
+      expect(response.body.data.brand.name).toBe(updateBrandDto.name);
+      expect(response.body.data.brand.slug).toBe(updateBrandDto.slug);
+    });
+
+    it('should successfully partially update a brand (PATCH)', async () => {
+      const patchData = { name: 'Partially Updated Brand' };
+      const response = await request(app.getHttpServer())
+        .patch(`/brands/${createdBrandId}`)
+        .set('Authorization', `Bearer ${adminAccessToken}`)
+        .send(patchData)
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.brand.name).toBe(patchData.name);
+      expect(response.body.data.brand.slug).toBe(updateBrandDto.slug); // Stayed from previous PUT
+    });
+
+    it('should fail if brand does not exist', async () => {
+      const response = await request(app.getHttpServer())
+        .put('/brands/999999')
+        .set('Authorization', `Bearer ${adminAccessToken}`)
+        .send(updateBrandDto)
+        .expect(404);
+
+      expect(response.body.success).toBe(false);
+    });
+
+    it('should fail if lacking authorization', async () => {
+      const response = await request(app.getHttpServer())
+        .put(`/brands/${createdBrandId}`)
+        .send(updateBrandDto)
+        .expect(401);
+
+      expect(response.body.success).toBe(false);
+    });
+  });
+
+  describe('/brands/:id (DELETE) - Delete Brand', () => {
+    it('should successfully delete a brand as admin', async () => {
+      const response = await request(app.getHttpServer())
+        .delete(`/brands/${createdBrandId}`)
+        .set('Authorization', `Bearer ${adminAccessToken}`)
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+
+      // Verify in DB
+      const brand = await prisma.brand.findUnique({
+        where: { id: createdBrandId },
+      });
+      expect(brand).toBeNull();
+    });
+
+    it('should fail if brand does not exist', async () => {
+      const response = await request(app.getHttpServer())
+        .delete('/brands/999999')
+        .set('Authorization', `Bearer ${adminAccessToken}`)
+        .expect(404);
+
+      expect(response.body.success).toBe(false);
+    });
+
+    it('should fail if lacking authorization', async () => {
+      const response = await request(app.getHttpServer())
+        .delete(`/brands/${createdBrandId}`)
+        .expect(401);
+
+      expect(response.body.success).toBe(false);
     });
   });
 });
