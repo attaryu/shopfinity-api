@@ -29,7 +29,7 @@ model User {
 }
 
 model Category {
-  id   Int    @id @default(autoincrement())
+  id   String @id @default(uuid())
   name String @unique
   slug String @unique
 
@@ -39,7 +39,7 @@ model Category {
 }
 
 model Brand {
-  id      Int    @id @default(autoincrement())
+  id      String @id @default(uuid())
   name    String @unique
   slug    String @unique
   logoUrl String @map("logo_url")
@@ -57,8 +57,8 @@ model Product {
   price       Float
   stock       Int
   imageUrl    String   @map("image_url")
-  categoryId  Int      @map("category_id")
-  brandId     Int      @map("brand_id")
+  categoryId  String   @map("category_id")
+  brandId     String   @map("brand_id")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 

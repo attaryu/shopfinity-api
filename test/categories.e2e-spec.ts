@@ -14,7 +14,7 @@ describe('CategoriesController (e2e)', () => {
   let app: INestApplication;
   let prisma: PrismaProvider;
   let adminAccessToken: string;
-  let createdCategoryId: number;
+  let createdCategoryId: string;
 
   const timestamp = Date.now();
   const testAdmin = {
@@ -167,19 +167,13 @@ describe('CategoriesController (e2e)', () => {
 
     it('should fail if category does not exist', async () => {
       const response = await request(app.getHttpServer())
-        .get(`/categories/9999999`)
+        .get(`/categories/550e8400-e29b-41d4-a716-446655440000`)
         .expect(404);
 
       expect(response.body.success).toBe(false);
     });
     
-    it('should fail with invalid id format', async () => {
-      const response = await request(app.getHttpServer())
-        .get(`/categories/invalid-id`)
-        .expect(400); // Assuming ParseIntPipe or similar is used
-
-      expect(response.body.success).toBe(false);
-    });
+    // Removed 'should fail with invalid id format' as all strings are valid for @Param('id')
   });
 
   describe('/categories (GET) - List Categories', () => {
@@ -364,7 +358,7 @@ describe('CategoriesController (e2e)', () => {
 
     it('should fail if attempting to update a non-existent category', async () => {
       const response = await request(app.getHttpServer())
-        .put(`/categories/9999999`)
+        .put(`/categories/550e8400-e29b-41d4-a716-446655440000`)
         .set('Authorization', `Bearer ${adminAccessToken}`)
         .send(updateCategoryDto)
         .expect(404);

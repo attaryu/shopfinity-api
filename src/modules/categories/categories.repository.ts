@@ -41,20 +41,20 @@ export class CategoriesRepository {
     return this.prisma.category.findMany();
   }
 
-  async findById(id: number) {
+  async findById(id: string) {
     return this.prisma.category.findUnique({
       where: { id },
     });
   }
 
-  async update(id: number, updateCategoryDto: UpdateCategoryDto) {
+  async update(id: string, updateCategoryDto: UpdateCategoryDto) {
     return this.prisma.category.update({
       where: { id },
       data: updateCategoryDto,
     });
   }
 
-  async delete(id: number) {
+  async delete(id: string) {
     return this.prisma.category.delete({
       where: { id },
     });

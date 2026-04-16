@@ -56,7 +56,7 @@ export class BrandsService {
     };
   }
 
-  async findById(id: number) {
+  async findById(id: string) {
     const brand = await this.brandsRepository.findById(id);
     if (!brand) {
       throw new NotFoundException(`Brand with ID ${id} not found`);
@@ -64,12 +64,12 @@ export class BrandsService {
     return brand;
   }
 
-  async update(id: number, updateBrandDto: UpdateBrandDto) {
+  async update(id: string, updateBrandDto: UpdateBrandDto) {
     await this.findById(id); // Check existence
     return this.brandsRepository.update(id, updateBrandDto);
   }
 
-  async remove(id: number) {
+  async remove(id: string) {
     await this.findById(id); // Check existence
     return this.brandsRepository.delete(id);
   }

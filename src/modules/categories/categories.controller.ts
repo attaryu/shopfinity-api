@@ -7,11 +7,10 @@ import {
   Param,
   Delete,
   UseGuards,
-  ParseIntPipe,
-  Put,
-  HttpStatus,
   HttpCode,
+  HttpStatus,
   Query,
+  Put,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -81,7 +80,7 @@ export class CategoriesController {
     type: SingleCategoryResponseDto,
   })
   async findOne(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: string,
   ): Promise<ControllerResponse> {
     const category = await this.categoriesService.findById(id);
     return {
@@ -97,7 +96,7 @@ export class CategoriesController {
   @ApiOperation({ summary: 'Update a category (Admin only)' })
   @ApiOkResponse({ description: 'Category updated successfully' })
   async update(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: string,
     @Body() updateCategoryDto: CreateCategoryDto, // Using CreateCategoryDto for PUT completeness
   ): Promise<ControllerResponse> {
     const category = await this.categoriesService.update(id, updateCategoryDto);
@@ -114,7 +113,7 @@ export class CategoriesController {
   @ApiOperation({ summary: 'Partially update a category (Admin only)' })
   @ApiOkResponse({ description: 'Category partially updated successfully' })
   async partialUpdate(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: string,
     @Body() updateCategoryDto: UpdateCategoryDto,
   ): Promise<ControllerResponse> {
     const category = await this.categoriesService.update(id, updateCategoryDto);
@@ -131,7 +130,7 @@ export class CategoriesController {
   @ApiOperation({ summary: 'Delete a category (Admin only)' })
   @ApiOkResponse({ description: 'Category deleted successfully' })
   async remove(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: string,
   ): Promise<ControllerResponse> {
     await this.categoriesService.remove(id);
     return {

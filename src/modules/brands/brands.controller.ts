@@ -8,7 +8,6 @@ import {
   Get,
   Query,
   Param,
-  ParseIntPipe,
   Put,
   Patch,
   Delete,
@@ -78,7 +77,7 @@ export class BrandsController {
     type: SingleBrandResponseDto,
   })
   async findOne(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: string,
   ): Promise<ControllerResponse> {
     const brand = await this.brandsService.findById(id);
     return {
@@ -94,7 +93,7 @@ export class BrandsController {
   @ApiOperation({ summary: 'Update a brand (Admin only)' })
   @ApiOkResponse({ description: 'Brand updated successfully' })
   async update(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: string,
     @Body() updateBrandDto: CreateBrandDto, // Using CreateBrandDto for PUT completeness
   ): Promise<ControllerResponse> {
     const brand = await this.brandsService.update(id, updateBrandDto);
@@ -111,7 +110,7 @@ export class BrandsController {
   @ApiOperation({ summary: 'Partially update a brand (Admin only)' })
   @ApiOkResponse({ description: 'Brand partially updated successfully' })
   async partialUpdate(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: string,
     @Body() updateBrandDto: UpdateBrandDto,
   ): Promise<ControllerResponse> {
     const brand = await this.brandsService.update(id, updateBrandDto);
@@ -128,7 +127,7 @@ export class BrandsController {
   @ApiOperation({ summary: 'Delete a brand (Admin only)' })
   @ApiOkResponse({ description: 'Brand deleted successfully' })
   async remove(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: string,
   ): Promise<ControllerResponse> {
     await this.brandsService.remove(id);
     return {

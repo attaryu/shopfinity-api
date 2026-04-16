@@ -35,7 +35,7 @@ describe('BrandsController (e2e)', () => {
     logoUrl: 'brand/updated-logo.png',
   };
 
-  let createdBrandId: number;
+  let createdBrandId: string;
   const initialBrand = {
     name: 'Initial Brand',
     slug: 'initial-brand',
@@ -181,7 +181,7 @@ describe('BrandsController (e2e)', () => {
 
     it('should fail if brand does not exist', async () => {
       const response = await request(app.getHttpServer())
-        .get('/brands/999999')
+        .get('/brands/550e8400-e29b-41d4-a716-446655440000')
         .expect(404);
 
       expect(response.body.success).toBe(false);
@@ -278,7 +278,7 @@ describe('BrandsController (e2e)', () => {
 
     it('should fail if brand does not exist', async () => {
       const response = await request(app.getHttpServer())
-        .put('/brands/999999')
+        .put('/brands/550e8400-e29b-41d4-a716-446655440000')
         .set('Authorization', `Bearer ${adminAccessToken}`)
         .send(updateBrandDto)
         .expect(404);
@@ -314,7 +314,7 @@ describe('BrandsController (e2e)', () => {
 
     it('should fail if brand does not exist', async () => {
       const response = await request(app.getHttpServer())
-        .delete('/brands/999999')
+        .delete('/brands/550e8400-e29b-41d4-a716-446655440000')
         .set('Authorization', `Bearer ${adminAccessToken}`)
         .expect(404);
 

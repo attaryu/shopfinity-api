@@ -37,20 +37,20 @@ export class BrandsRepository {
     return this.prisma.brand.count({ where });
   }
 
-  async findById(id: number) {
+  async findById(id: string) {
     return this.prisma.brand.findUnique({
       where: { id },
     });
   }
 
-  async update(id: number, updateBrandDto: UpdateBrandDto) {
+  async update(id: string, updateBrandDto: UpdateBrandDto) {
     return this.prisma.brand.update({
       where: { id },
       data: updateBrandDto,
     });
   }
 
-  async delete(id: number) {
+  async delete(id: string) {
     return this.prisma.brand.delete({
       where: { id },
     });

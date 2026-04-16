@@ -59,7 +59,7 @@ export class CategoriesService {
     return this.categoriesRepository.findAll();
   }
 
-  async findById(id: number) {
+  async findById(id: string) {
     const category = await this.categoriesRepository.findById(id);
     if (!category) {
       throw new NotFoundException(`Category with ID ${id} not found`);
@@ -67,12 +67,12 @@ export class CategoriesService {
     return category;
   }
 
-  async update(id: number, updateCategoryDto: UpdateCategoryDto) {
+  async update(id: string, updateCategoryDto: UpdateCategoryDto) {
     await this.findById(id); // Check existence
     return this.categoriesRepository.update(id, updateCategoryDto);
   }
 
-  async remove(id: number) {
+  async remove(id: string) {
     await this.findById(id); // Check existence
     return this.categoriesRepository.delete(id);
   }
