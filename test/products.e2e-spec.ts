@@ -7,6 +7,7 @@ import { PrismaProvider } from './../src/common/providers/prisma.provider';
 import { HttpExceptionFilter } from './../src/common/filters/http-exception.filter';
 import { ResponseInterceptor } from './../src/common/interceptors/response.interceptor';
 import { Role } from '@prisma/client';
+import { MediaStorageProvider } from './../src/common/providers/media-storage.provider';
 
 jest.setTimeout(30000);
 
@@ -17,6 +18,7 @@ describe('ProductsController (e2e)', () => {
   let testCategoryId: string;
   let testBrandId: string;
   let createdProductId: string;
+  let storageProvider: MediaStorageProvider;
 
   const timestamp = Date.now();
   const testAdmin = {
@@ -54,9 +56,22 @@ describe('ProductsController (e2e)', () => {
   };
 
   beforeAll(async () => {
+    const mockMediaStorageProvider = {
+      generateSignedUploadUrl: jest.fn().mockResolvedValue({
+        signUrl: 'https://mock-storage.com/upload-url',
+        path: 'products/images/mock-id-test.png',
+        token: 'mock-upload-token',
+      }),
+      exists: jest.fn().mockResolvedValue(true),
+      delete: jest.fn().mockResolvedValue(undefined),
+    };
+
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
-    }).compile();
+    })
+      .overrideProvider(MediaStorageProvider)
+      .useValue(mockMediaStorageProvider)
+      .compile();
 
     app = moduleFixture.createNestApplication();
 
@@ -74,6 +89,7 @@ describe('ProductsController (e2e)', () => {
     await app.init();
 
     prisma = app.get(PrismaProvider);
+    storageProvider = app.get(MediaStorageProvider);
 
     // Clean any lingering from past failures
     await prisma.product.deleteMany({
@@ -180,7 +196,6 @@ describe('ProductsController (e2e)', () => {
       expect(response.body.success).toBe(true);
       expect(response.body.data.signUrl).toBeDefined();
       expect(response.body.data.path).toContain('products/images/');
-      expect(response.body.data.path).toContain('iphone.png');
     });
 
     it('should fail if lacking authorization', async () => {
@@ -217,6 +232,25 @@ describe('ProductsController (e2e)', () => {
       await prisma.product.delete({
         where: { id: response.body.data.product.id },
       });
+    });
+
+    it('should fail if imageUrl does not exist in storage', async () => {
+      jest.spyOn(storageProvider, 'exists').mockResolvedValueOnce(false);
+
+      const response = await request(app.getHttpServer())
+        .post('/products')
+        .set('Authorization', `Bearer ${adminAccessToken}`)
+        .send({
+          ...newProduct,
+          name: 'Not Found Image Product',
+          slug: 'not-found-image',
+          categoryId: testCategoryId,
+          brandId: testBrandId,
+        })
+        .expect(400);
+
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toContain('Product image not found');
     });
 
     it('should fail validation if categoryId is missing', async () => {
@@ -385,6 +419,39 @@ describe('ProductsController (e2e)', () => {
 
       expect(response.body.success).toBe(false);
     });
+
+    it('should delete existing image from storage when imageUrl is updated', async () => {
+      // Create a fresh product for this test
+      const productToUpdate = await prisma.product.create({
+        data: {
+          name: 'Life Cycle Update Test',
+          slug: 'lc-prod-update-test',
+          description: 'test',
+          price: 10,
+          stock: 1,
+          imageUrl: 'products/old-image.png',
+          categoryId: testCategoryId,
+          brandId: testBrandId,
+        },
+      });
+
+      const deleteSpy = storageProvider.delete as jest.Mock;
+      deleteSpy.mockClear();
+
+      jest.spyOn(storageProvider, 'exists').mockResolvedValue(true);
+
+      const response = await request(app.getHttpServer())
+        .patch(`/products/${productToUpdate.id}`)
+        .set('Authorization', `Bearer ${adminAccessToken}`)
+        .send({ imageUrl: 'products/new-image.png' })
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(deleteSpy).toHaveBeenCalledWith('products/old-image.png');
+
+      // Cleanup
+      await prisma.product.delete({ where: { id: productToUpdate.id } });
+    });
   });
 
   describe('/products/:id (DELETE) - Delete Product', () => {
@@ -410,6 +477,33 @@ describe('ProductsController (e2e)', () => {
         .expect(404);
 
       expect(response.body.success).toBe(false);
+    });
+
+    it('should delete image from storage when product is deleted', async () => {
+      // Seed a new product specifically for deletion test
+      const productToDelete = await prisma.product.create({
+        data: {
+          name: 'Life Cycle Delete Test',
+          slug: 'lc-prod-delete-test',
+          description: 'test',
+          price: 10,
+          stock: 1,
+          imageUrl: 'products/delete-me.png',
+          categoryId: testCategoryId,
+          brandId: testBrandId,
+        },
+      });
+
+      const deleteSpy = storageProvider.delete as jest.Mock;
+      deleteSpy.mockClear();
+
+      const response = await request(app.getHttpServer())
+        .delete(`/products/${productToDelete.id}`)
+        .set('Authorization', `Bearer ${adminAccessToken}`)
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(deleteSpy).toHaveBeenCalledWith('products/delete-me.png');
     });
   });
 });

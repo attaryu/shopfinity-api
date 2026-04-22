@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { MediaStorageProvider } from 'src/common/providers/media-storage.provider';
 import { ProductsRepository } from './products.repository';
 import { CreateProductDto } from './dto/request/create-product.dto';
@@ -22,6 +22,14 @@ export class ProductsService {
   }
 
   async create(createProductDto: CreateProductDto) {
+    const isImageExist = await this.mediaStorage.exists(
+      createProductDto.imageUrl,
+    );
+    if (!isImageExist) {
+      throw new BadRequestException(
+        `Product image not found at path: ${createProductDto.imageUrl}`,
+      );
+    }
     return this.productsRepository.create(createProductDto);
   }
 
@@ -93,12 +101,48 @@ export class ProductsService {
   }
 
   async update(id: string, updateProductDto: UpdateProductDto) {
-    await this.findById(id); // Check existence
-    return this.productsRepository.update(id, updateProductDto);
+    const currentProduct = await this.findById(id);
+
+    let oldImageUrl: string | null = null;
+    if (
+      updateProductDto.imageUrl &&
+      updateProductDto.imageUrl !== currentProduct.imageUrl
+    ) {
+      const isImageExist = await this.mediaStorage.exists(
+        updateProductDto.imageUrl,
+      );
+      if (!isImageExist) {
+        throw new BadRequestException(
+          `Product image not found at path: ${updateProductDto.imageUrl}`,
+        );
+      }
+      oldImageUrl = currentProduct.imageUrl;
+    }
+
+    const updatedProduct = await this.productsRepository.update(
+      id,
+      updateProductDto,
+    );
+
+    if (oldImageUrl) {
+      await this.mediaStorage.delete(oldImageUrl).catch((err) => {
+        console.error(`Failed to delete old product image: ${err.message}`);
+      });
+    }
+
+    return updatedProduct;
   }
 
   async remove(id: string) {
-    await this.findById(id); // Check existence
-    return this.productsRepository.delete(id);
+    const product = await this.findById(id);
+    const result = await this.productsRepository.delete(id);
+
+    if (product.imageUrl) {
+      await this.mediaStorage.delete(product.imageUrl).catch((err) => {
+        console.error(`Failed to delete product image: ${err.message}`);
+      });
+    }
+
+    return result;
   }
 }
