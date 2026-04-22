@@ -28,11 +28,33 @@ import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/request/create-product.dto';
 import { UpdateProductDto } from './dto/request/update-product.dto';
 import { ListProductsQueryDto } from './dto/request/list-products-query.dto';
+import { UploadUrlRequestDto } from './dto/request/upload-url-request.dto';
+import { UploadUrlResponseDto } from './dto/response/upload-url-response.dto';
 
 @ApiTags('products')
 @Controller('products')
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
+
+  @Post('upload-url')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Get a signed URL for uploading a product image (Admin only)' })
+  @ApiOkResponse({
+    description: 'Signed URL generated successfully',
+    type: UploadUrlResponseDto,
+  })
+  async getUploadUrl(
+    @Body() uploadUrlRequestDto: UploadUrlRequestDto,
+  ): Promise<ControllerResponse> {
+    const data = await this.productsService.generateUploadUrl(uploadUrlRequestDto);
+    return {
+      message: 'Signed URL generated successfully',
+      data,
+    };
+  }
 
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)

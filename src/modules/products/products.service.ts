@@ -1,12 +1,25 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { MediaStorageProvider } from 'src/common/providers/media-storage.provider';
 import { ProductsRepository } from './products.repository';
 import { CreateProductDto } from './dto/request/create-product.dto';
 import { UpdateProductDto } from './dto/request/update-product.dto';
 import { ListProductsQueryDto } from './dto/request/list-products-query.dto';
+import { UploadUrlRequestDto } from './dto/request/upload-url-request.dto';
 
 @Injectable()
 export class ProductsService {
-  constructor(private readonly productsRepository: ProductsRepository) {}
+  constructor(
+    private readonly productsRepository: ProductsRepository,
+    private readonly mediaStorage: MediaStorageProvider,
+  ) {}
+
+  async generateUploadUrl(uploadUrlRequestDto: UploadUrlRequestDto) {
+    const { fileName } = uploadUrlRequestDto;
+    const randomId = crypto.randomUUID();
+    const path = `products/images/${randomId}-${fileName}`;
+
+    return this.mediaStorage.generateSignedUploadUrl(path);
+  }
 
   async create(createProductDto: CreateProductDto) {
     return this.productsRepository.create(createProductDto);

@@ -106,7 +106,11 @@ describe('ProductsController (e2e)', () => {
     testCategoryId = category.id;
 
     const brand = await prisma.brand.create({
-      data: { name: 'Test Brand Prod', slug: 'test-brand-prod', logoUrl: 'brand/test.png' },
+      data: {
+        name: 'Test Brand Prod',
+        slug: 'test-brand-prod',
+        logoUrl: 'brand/test.png',
+      },
     });
     testBrandId = brand.id;
 
@@ -162,6 +166,36 @@ describe('ProductsController (e2e)', () => {
     await app.close();
   });
 
+  describe('/products/upload-url (POST)', () => {
+    it('should successfully generate a signed URL as admin', async () => {
+      const response = await request(app.getHttpServer())
+        .post('/products/upload-url')
+        .set('Authorization', `Bearer ${adminAccessToken}`)
+        .send({
+          fileName: 'iphone.png',
+          fileType: 'image/png',
+        })
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.signUrl).toBeDefined();
+      expect(response.body.data.path).toContain('products/images/');
+      expect(response.body.data.path).toContain('iphone.png');
+    });
+
+    it('should fail if lacking authorization', async () => {
+      const response = await request(app.getHttpServer())
+        .post('/products/upload-url')
+        .send({
+          fileName: 'iphone.png',
+          fileType: 'image/png',
+        })
+        .expect(401);
+
+      expect(response.body.success).toBe(false);
+    });
+  });
+
   describe('/products (POST) - Add Product', () => {
     it('should successfully create a new product as admin', async () => {
       const response = await request(app.getHttpServer())
@@ -180,11 +214,13 @@ describe('ProductsController (e2e)', () => {
       expect(response.body.data.product.brandId).toBe(testBrandId);
 
       // Clean up the created product
-      await prisma.product.delete({ where: { id: response.body.data.product.id } });
+      await prisma.product.delete({
+        where: { id: response.body.data.product.id },
+      });
     });
 
     it('should fail validation if categoryId is missing', async () => {
-      const { categoryId, ...invalidProduct } = { ...newProduct, brandId: testBrandId };
+      const invalidProduct = { ...newProduct, brandId: testBrandId };
       const response = await request(app.getHttpServer())
         .post('/products')
         .set('Authorization', `Bearer ${adminAccessToken}`)
@@ -274,7 +310,11 @@ describe('ProductsController (e2e)', () => {
         .expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.data.products.every((p: any) => p.categoryId === testCategoryId)).toBe(true);
+      expect(
+        response.body.data.products.every(
+          (p: any) => p.categoryId === testCategoryId,
+        ),
+      ).toBe(true);
     });
 
     it('should filter products by brandId', async () => {
@@ -283,7 +323,11 @@ describe('ProductsController (e2e)', () => {
         .expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.data.products.every((p: any) => p.brandId === testBrandId)).toBe(true);
+      expect(
+        response.body.data.products.every(
+          (p: any) => p.brandId === testBrandId,
+        ),
+      ).toBe(true);
     });
 
     it('should sort products by price desc', async () => {
