@@ -37,6 +37,18 @@ export class BrandsRepository {
     return this.prisma.brand.count({ where });
   }
 
+  async findAllList() {
+    return this.prisma.brand.findMany({
+      select: {
+        id: true,
+        name: true,
+      },
+      orderBy: {
+        name: 'asc',
+      },
+    });
+  }
+
   async findById(id: string) {
     return this.prisma.brand.findUnique({
       where: { id },

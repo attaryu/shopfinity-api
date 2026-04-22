@@ -75,6 +75,10 @@ export class BrandsService {
     };
   }
 
+  async findAllList() {
+    return this.brandsRepository.findAllList();
+  }
+
   async findById(id: string) {
     const brand = await this.brandsRepository.findById(id);
     if (!brand) {

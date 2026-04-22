@@ -30,6 +30,7 @@ import { UpdateCategoryDto } from './dto/request/update-category.dto';
 import { ListCategoriesQueryDto } from './dto/request/list-categories-query.dto';
 import { CategoryListResponseDto } from './dto/response/category-list-response.dto';
 import { SingleCategoryResponseDto } from './dto/response/single-category-response.dto';
+import { CategoryListSimpleResponseDto } from './dto/response/category-list-simple-response.dto';
 
 
 @ApiTags('categories')
@@ -70,6 +71,22 @@ export class CategoriesController {
       message: 'Categories retrieved successfully',
       data: { categories: result.categories },
       meta: result.meta,
+    };
+  }
+
+  @Get('list')
+  @ApiOperation({
+    summary: 'List all categories with only ID and name (no pagination)',
+  })
+  @ApiOkResponse({
+    description: 'Categories list retrieved successfully',
+    type: CategoryListSimpleResponseDto,
+  })
+  async listAll(): Promise<ControllerResponse> {
+    const categories = await this.categoriesService.findAllList();
+    return {
+      message: 'Categories list retrieved successfully',
+      data: { categories },
     };
   }
 

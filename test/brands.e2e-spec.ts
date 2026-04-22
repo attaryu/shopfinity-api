@@ -316,6 +316,34 @@ describe('BrandsController (e2e)', () => {
       expect(response.body.data.brands.length).toBe(2);
       expect(response.body.meta.currentPage).toBe(1);
     });
+
+    describe('/brands/list (GET) - List Brands for Dropdown', () => {
+      it('should successfully list all brands with only id and name, sorted by name', async () => {
+        const response = await request(app.getHttpServer())
+          .get('/brands/list')
+          .expect(200);
+
+        expect(response.body.success).toBe(true);
+        expect(Array.isArray(response.body.data.brands)).toBe(true);
+        expect(response.body.data.brands.length).toBeGreaterThanOrEqual(4);
+
+        // Check that only id and name are present
+        const firstBrand = response.body.data.brands[0];
+        expect(Object.keys(firstBrand)).toEqual(expect.arrayContaining(['id', 'name']));
+        expect(firstBrand.slug).toBeUndefined();
+        expect(firstBrand.logoUrl).toBeUndefined();
+
+        // Check sorting (ASC)
+        const names = response.body.data.brands.map((b: any) => b.name);
+        const sortedNames = [...names].sort((a, b) => a.localeCompare(b));
+        expect(names).toEqual(sortedNames);
+
+        // Check no pagination meta (only timestamp from interceptor)
+        expect(response.body.meta).toEqual({
+          timestamp: expect.any(String),
+        });
+      });
+    });
   });
 
   describe('/brands/:id (PUT/PATCH) - Update Brand', () => {

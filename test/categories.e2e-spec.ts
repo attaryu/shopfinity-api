@@ -289,6 +289,34 @@ describe('CategoriesController (e2e)', () => {
       expect(response.body.meta.totalItems).toBeDefined();
 
     });
+
+    describe('/categories/list (GET) - List Categories for Dropdown', () => {
+      it('should successfully list all categories with only id and name, sorted by name', async () => {
+        const response = await request(app.getHttpServer())
+          .get('/categories/list')
+          .expect(200);
+
+        expect(response.body.success).toBe(true);
+        expect(Array.isArray(response.body.data.categories)).toBe(true);
+        expect(response.body.data.categories.length).toBeGreaterThanOrEqual(4);
+        
+        // Check that only id and name are present
+        const firstCategory = response.body.data.categories[0];
+        expect(Object.keys(firstCategory)).toEqual(expect.arrayContaining(['id', 'name']));
+        expect(firstCategory.slug).toBeUndefined();
+        expect(firstCategory.productCount).toBeUndefined();
+
+        // Check sorting (ASC)
+        const names = response.body.data.categories.map((c: any) => c.name);
+        const sortedNames = [...names].sort((a, b) => a.localeCompare(b));
+        expect(names).toEqual(sortedNames);
+
+        // Check no pagination meta (only timestamp from interceptor)
+        expect(response.body.meta).toEqual({
+          timestamp: expect.any(String),
+        });
+      });
+    });
   });
 
   describe('/categories/:id (PUT/PATCH) - Update Category', () => {

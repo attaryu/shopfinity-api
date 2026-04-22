@@ -59,6 +59,10 @@ export class CategoriesService {
     return this.categoriesRepository.findAll();
   }
 
+  async findAllList() {
+    return this.categoriesRepository.findAllList();
+  }
+
   async findById(id: string) {
     const category = await this.categoriesRepository.findById(id);
     if (!category) {

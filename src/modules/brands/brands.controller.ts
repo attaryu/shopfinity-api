@@ -32,6 +32,7 @@ import { BrandListResponseDto } from './dto/response/brand-list-response.dto';
 import { SingleBrandResponseDto } from './dto/response/single-brand-response.dto';
 import { UploadUrlRequestDto } from './dto/request/upload-url-request.dto';
 import { UploadUrlResponseDto } from './dto/response/upload-url-response.dto';
+import { BrandListSimpleResponseDto } from './dto/response/brand-list-simple-response.dto';
 
 @ApiTags('brands')
 @Controller('brands')
@@ -89,6 +90,22 @@ export class BrandsController {
       message: 'Brands retrieved successfully',
       data: { brands: result.brands },
       meta: result.meta,
+    };
+  }
+
+  @Get('list')
+  @ApiOperation({
+    summary: 'List all brands with only ID and name (no pagination)',
+  })
+  @ApiOkResponse({
+    description: 'Brands list retrieved successfully',
+    type: BrandListSimpleResponseDto,
+  })
+  async listAll(): Promise<ControllerResponse> {
+    const brands = await this.brandsService.findAllList();
+    return {
+      message: 'Brands list retrieved successfully',
+      data: { brands },
     };
   }
 
