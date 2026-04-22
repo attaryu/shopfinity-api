@@ -55,4 +55,16 @@ export class MediaStorageProvider {
 
     return data;
   }
+
+  async delete(path: string): Promise<void> {
+    const { error } = await this.supabase.storage
+      .from(this.bucket)
+      .remove([path]);
+
+    if (error) {
+      throw new InternalServerErrorException(
+        `Failed to delete file: ${error.message}`,
+      );
+    }
+  }
 }

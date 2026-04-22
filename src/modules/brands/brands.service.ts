@@ -84,9 +84,13 @@ export class BrandsService {
   }
 
   async update(id: string, updateBrandDto: UpdateBrandDto) {
-    await this.findById(id); // Check existence
+    const currentBrand = await this.findById(id);
 
-    if (updateBrandDto.logoUrl) {
+    let oldLogoUrl: string | null = null;
+    if (
+      updateBrandDto.logoUrl &&
+      updateBrandDto.logoUrl !== currentBrand.logoUrl
+    ) {
       const isLogoExist = await this.mediaStorage.exists(
         updateBrandDto.logoUrl,
       );
@@ -95,13 +99,31 @@ export class BrandsService {
           `Logo file not found at path: ${updateBrandDto.logoUrl}`,
         );
       }
+      oldLogoUrl = currentBrand.logoUrl;
     }
 
-    return this.brandsRepository.update(id, updateBrandDto);
+    const updatedBrand = await this.brandsRepository.update(id, updateBrandDto);
+
+    if (oldLogoUrl) {
+      await this.mediaStorage.delete(oldLogoUrl).catch((err) => {
+        // Log error but don't fail the request if deletion fails
+        console.error(`Failed to delete old logo: ${err.message}`);
+      });
+    }
+
+    return updatedBrand;
   }
 
   async remove(id: string) {
-    await this.findById(id); // Check existence
-    return this.brandsRepository.delete(id);
+    const brand = await this.findById(id);
+    const result = await this.brandsRepository.delete(id);
+
+    if (brand.logoUrl) {
+      await this.mediaStorage.delete(brand.logoUrl).catch((err) => {
+        console.error(`Failed to delete brand logo: ${err.message}`);
+      });
+    }
+
+    return result;
   }
 }

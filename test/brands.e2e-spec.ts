@@ -52,6 +52,7 @@ describe('BrandsController (e2e)', () => {
         token: 'mock-upload-token',
       }),
       exists: jest.fn().mockResolvedValue(true),
+      delete: jest.fn().mockResolvedValue(undefined),
     };
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -80,11 +81,7 @@ describe('BrandsController (e2e)', () => {
     storageProvider = app.get(MediaStorageProvider);
 
     // Clean any lingering from past failures
-    await prisma.brand.deleteMany({
-      where: {
-        OR: [{ name: newBrand.name }, { slug: newBrand.slug }, { name: initialBrand.name }, { name: updateBrandDto.name }],
-      },
-    });
+    await prisma.brand.deleteMany();
 
     await prisma.user.deleteMany({
       where: { email: testAdmin.email },
@@ -348,6 +345,31 @@ describe('BrandsController (e2e)', () => {
       expect(response.body.data.brand.slug).toBe(updateBrandDto.slug); // Stayed from previous PUT
     });
 
+    it('should delete existing logo from storage when logoUrl is updated', async () => {
+      // Create a fresh brand for this test
+      const brandToUpdate = await prisma.brand.create({
+        data: {
+          name: 'Life Cycle Update Test',
+          slug: 'lc-update-test',
+          logoUrl: 'brand/old-logo.png',
+        },
+      });
+
+      const deleteSpy = storageProvider.delete as jest.Mock;
+      deleteSpy.mockClear();
+      
+      jest.spyOn(storageProvider, 'exists').mockResolvedValue(true);
+
+      const response = await request(app.getHttpServer())
+        .patch(`/brands/${brandToUpdate.id}`)
+        .set('Authorization', `Bearer ${adminAccessToken}`)
+        .send({ logoUrl: 'brand/new-logo.png' })
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(deleteSpy).toHaveBeenCalledWith('brand/old-logo.png');
+    });
+
     it('should fail if brand does not exist', async () => {
       const response = await request(app.getHttpServer())
         .put('/brands/550e8400-e29b-41d4-a716-446655440000')
@@ -382,6 +404,28 @@ describe('BrandsController (e2e)', () => {
         where: { id: createdBrandId },
       });
       expect(brand).toBeNull();
+    });
+
+    it('should delete logo from storage when brand is deleted', async () => {
+      // Seed a new brand specifically for deletion test
+      const brandToDelete = await prisma.brand.create({
+        data: {
+          name: 'Life Cycle Delete Test',
+          slug: 'lc-delete-test',
+          logoUrl: 'brand/delete-me.png',
+        },
+      });
+
+      const deleteSpy = storageProvider.delete as jest.Mock;
+      deleteSpy.mockClear();
+
+      const response = await request(app.getHttpServer())
+        .delete(`/brands/${brandToDelete.id}`)
+        .set('Authorization', `Bearer ${adminAccessToken}`)
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(deleteSpy).toHaveBeenCalledWith('brand/delete-me.png');
     });
 
     it('should fail if brand does not exist', async () => {
