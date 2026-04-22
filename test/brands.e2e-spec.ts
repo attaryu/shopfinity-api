@@ -44,6 +44,31 @@ describe('BrandsController (e2e)', () => {
     logoUrl: 'brand/initial-logo.png',
   };
 
+  const createdBrandsSlugs = [
+    'apple',
+    'updated-brand',
+    'initial-brand',
+    'samsung',
+    'sony',
+    'nike',
+    'lc-update-test',
+    'lc-delete-test',
+    'not-found-logo',
+  ];
+
+  const createdBrandsNames = [
+    'Apple',
+    'Updated Brand',
+    'Initial Brand',
+    'Samsung',
+    'Sony',
+    'Nike',
+    'Life Cycle Update Test',
+    'Life Cycle Delete Test',
+    'Partially Updated Brand',
+    'Not Found Logo Brand',
+  ];
+
   beforeAll(async () => {
     const mockMediaStorageProvider = {
       generateSignedUploadUrl: jest.fn().mockResolvedValue({
@@ -80,8 +105,15 @@ describe('BrandsController (e2e)', () => {
     prisma = app.get(PrismaProvider);
     storageProvider = app.get(MediaStorageProvider);
 
-    // Clean any lingering from past failures
-    await prisma.brand.deleteMany();
+    // Clean any lingering from past failures (surgical)
+    await prisma.brand.deleteMany({
+      where: {
+        OR: [
+          { slug: { in: createdBrandsSlugs } },
+          { name: { in: createdBrandsNames } },
+        ],
+      },
+    });
 
     await prisma.user.deleteMany({
       where: { email: testAdmin.email },
@@ -121,7 +153,10 @@ describe('BrandsController (e2e)', () => {
   afterAll(async () => {
     await prisma.brand.deleteMany({
       where: {
-        OR: [{ name: newBrand.name }, { slug: newBrand.slug }, { name: initialBrand.name }, { name: updateBrandDto.name }],
+        OR: [
+          { slug: { in: createdBrandsSlugs } },
+          { name: { in: createdBrandsNames } },
+        ],
       },
     });
     await prisma.user.deleteMany({
@@ -266,14 +301,6 @@ describe('BrandsController (e2e)', () => {
           { name: 'Sony', slug: 'sony', logoUrl: 'brand/sony.png' },
           { name: 'Nike', slug: 'nike', logoUrl: 'brand/nike.png' },
         ],
-      });
-    });
-
-    afterAll(async () => {
-      await prisma.brand.deleteMany({
-        where: {
-          slug: { in: ['samsung', 'sony', 'nike'] },
-        },
       });
     });
 
