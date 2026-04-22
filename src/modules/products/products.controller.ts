@@ -29,7 +29,9 @@ import { CreateProductDto } from './dto/request/create-product.dto';
 import { UpdateProductDto } from './dto/request/update-product.dto';
 import { ListProductsQueryDto } from './dto/request/list-products-query.dto';
 import { UploadUrlRequestDto } from './dto/request/upload-url-request.dto';
+import { ClientListProductsQueryDto } from './dto/request/client-list-products-query.dto';
 import { UploadUrlResponseDto } from './dto/response/upload-url-response.dto';
+import { ClientProductListResponseDto } from './dto/response/client-product-response.dto';
 
 @ApiTags('products')
 @Controller('products')
@@ -82,6 +84,25 @@ export class ProductsController {
   })
   async findAll(@Query() query: ListProductsQueryDto): Promise<ControllerResponse> {
     const result = await this.productsService.findAllPaginated(query);
+    return {
+      message: 'Products retrieved successfully',
+      data: { products: result.products },
+      meta: result.meta,
+    };
+  }
+
+  @Get('client')
+  @ApiOperation({
+    summary: 'List products for client-side with specific filters and pagination',
+  })
+  @ApiOkResponse({
+    description: 'Products retrieved successfully',
+    type: ClientProductListResponseDto,
+  })
+  async findAllForClient(
+    @Query() query: ClientListProductsQueryDto,
+  ): Promise<ControllerResponse> {
+    const result = await this.productsService.findAllForClients(query);
     return {
       message: 'Products retrieved successfully',
       data: { products: result.products },

@@ -1,9 +1,14 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { MediaStorageProvider } from 'src/common/providers/media-storage.provider';
 import { ProductsRepository } from './products.repository';
 import { CreateProductDto } from './dto/request/create-product.dto';
 import { UpdateProductDto } from './dto/request/update-product.dto';
 import { ListProductsQueryDto } from './dto/request/list-products-query.dto';
+import { ClientListProductsQueryDto } from './dto/request/client-list-products-query.dto';
 import { UploadUrlRequestDto } from './dto/request/upload-url-request.dto';
 
 @Injectable()
@@ -88,6 +93,78 @@ export class ProductsService {
         itemsPerPage: limit,
         totalPages: Math.ceil(totalItems / limit),
         currentPage: page,
+      },
+    };
+  }
+
+  async findAllForClients(query: ClientListProductsQueryDto) {
+    const {
+      search,
+      brand,
+      category,
+      minPrice,
+      maxPrice,
+      nextOffset: offset = 0,
+    } = query;
+
+    const where: any = { AND: [] };
+
+    if (search) {
+      where.AND.push({
+        OR: [
+          { name: { contains: search, mode: 'insensitive' } },
+          { slug: { contains: search, mode: 'insensitive' } },
+        ],
+      });
+    }
+
+    if (brand) {
+      where.AND.push({ brand: { slug: brand } });
+    }
+
+    if (category) {
+      where.AND.push({ category: { slug: category } });
+    }
+
+    if (minPrice !== undefined) {
+      where.AND.push({ price: { gte: minPrice } });
+    }
+
+    if (maxPrice !== undefined) {
+      where.AND.push({ price: { lte: maxPrice } });
+    }
+
+    const finalWhere = where.AND.length > 0 ? where : {};
+    const limit = 12;
+
+    const [products, totalItems] = await Promise.all([
+      this.productsRepository.findPaginated({
+        skip: offset,
+        take: limit,
+        where: finalWhere,
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.productsRepository.countAll(finalWhere),
+    ]);
+
+    const mappedProducts = products.map((product) => ({
+      id: product.id,
+      name: product.name,
+      slug: product.slug,
+      imageUrl: product.imageUrl,
+      price: product.price,
+      category: product.category,
+      brand: product.brand,
+    }));
+
+    return {
+      products: mappedProducts,
+      meta: {
+        totalItems,
+        itemCount: products.length,
+        itemsPerPage: limit,
+        nextOffset:
+          offset + products.length < totalItems ? offset + limit : null,
       },
     };
   }
