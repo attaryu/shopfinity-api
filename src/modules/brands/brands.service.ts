@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { MediaStorageProvider } from 'src/common/providers/media-storage.provider';
 import { BrandsRepository } from './brands.repository';
 import { CreateBrandDto } from './dto/request/create-brand.dto';
@@ -22,6 +22,12 @@ export class BrandsService {
   }
 
   async create(createBrandDto: CreateBrandDto) {
+    const isLogoExist = await this.mediaStorage.exists(createBrandDto.logoUrl);
+    if (!isLogoExist) {
+      throw new BadRequestException(
+        `Logo file not found at path: ${createBrandDto.logoUrl}`,
+      );
+    }
     return this.brandsRepository.create(createBrandDto);
   }
 
@@ -79,6 +85,18 @@ export class BrandsService {
 
   async update(id: string, updateBrandDto: UpdateBrandDto) {
     await this.findById(id); // Check existence
+
+    if (updateBrandDto.logoUrl) {
+      const isLogoExist = await this.mediaStorage.exists(
+        updateBrandDto.logoUrl,
+      );
+      if (!isLogoExist) {
+        throw new BadRequestException(
+          `Logo file not found at path: ${updateBrandDto.logoUrl}`,
+        );
+      }
+    }
+
     return this.brandsRepository.update(id, updateBrandDto);
   }
 

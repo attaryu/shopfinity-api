@@ -41,4 +41,18 @@ export class MediaStorageProvider {
       token: data.token,
     };
   }
+
+  async exists(path: string): Promise<boolean> {
+    const { data, error } = await this.supabase.storage
+      .from(this.bucket)
+      .exists(path);
+
+    if (error) {
+      throw new InternalServerErrorException(
+        `Failed to check if file exists: ${error.message}`,
+      );
+    }
+
+    return data;
+  }
 }

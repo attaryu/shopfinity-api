@@ -15,6 +15,7 @@ describe('BrandsController (e2e)', () => {
   let app: INestApplication;
   let prisma: PrismaProvider;
   let adminAccessToken: string;
+  let storageProvider: MediaStorageProvider;
 
   const timestamp = Date.now();
   const testAdmin = {
@@ -50,6 +51,7 @@ describe('BrandsController (e2e)', () => {
         path: 'brands/logos/mock-id-test.png',
         token: 'mock-upload-token',
       }),
+      exists: jest.fn().mockResolvedValue(true),
     };
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -75,6 +77,7 @@ describe('BrandsController (e2e)', () => {
     await app.init();
 
     prisma = app.get(PrismaProvider);
+    storageProvider = app.get(MediaStorageProvider);
 
     // Clean any lingering from past failures
     await prisma.brand.deleteMany({
@@ -185,6 +188,23 @@ describe('BrandsController (e2e)', () => {
 
       // Clean up the created brand
       await prisma.brand.delete({ where: { id: response.body.data.brand.id } });
+    });
+
+    it('should fail if logoUrl does not exist in storage', async () => {
+      jest.spyOn(storageProvider, 'exists').mockResolvedValueOnce(false);
+
+      const response = await request(app.getHttpServer())
+        .post('/brands')
+        .set('Authorization', `Bearer ${adminAccessToken}`)
+        .send({
+          ...newBrand,
+          name: 'Not Found Logo Brand',
+          slug: 'not-found-logo',
+        })
+        .expect(400);
+
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toContain('Logo file not found');
     });
 
     it('should fail validation if logoUrl is missing', async () => {
