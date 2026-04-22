@@ -46,6 +46,7 @@ export class CategoriesRepository {
       select: {
         id: true,
         name: true,
+        slug: true,
       },
       orderBy: {
         name: 'asc',

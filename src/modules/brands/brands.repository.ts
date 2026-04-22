@@ -42,6 +42,8 @@ export class BrandsRepository {
       select: {
         id: true,
         name: true,
+        slug: true,
+        logoUrl: true,
       },
       orderBy: {
         name: 'asc',

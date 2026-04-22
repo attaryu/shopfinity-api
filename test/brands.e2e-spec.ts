@@ -354,11 +354,11 @@ describe('BrandsController (e2e)', () => {
         expect(Array.isArray(response.body.data.brands)).toBe(true);
         expect(response.body.data.brands.length).toBeGreaterThanOrEqual(4);
 
-        // Check that only id and name are present
+        // Check that id, name, slug, and logoUrl are present
         const firstBrand = response.body.data.brands[0];
-        expect(Object.keys(firstBrand)).toEqual(expect.arrayContaining(['id', 'name']));
-        expect(firstBrand.slug).toBeUndefined();
-        expect(firstBrand.logoUrl).toBeUndefined();
+        expect(Object.keys(firstBrand)).toEqual(expect.arrayContaining(['id', 'name', 'slug', 'logoUrl']));
+        expect(firstBrand.slug).toBeDefined();
+        expect(firstBrand.logoUrl).toBeDefined();
 
         // Check sorting (ASC)
         const names = response.body.data.brands.map((b: any) => b.name);

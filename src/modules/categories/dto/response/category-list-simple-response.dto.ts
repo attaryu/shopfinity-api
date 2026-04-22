@@ -12,6 +12,12 @@ export class SimpleCategoryDto {
     description: 'The name of the category',
   })
   name: string;
+
+  @ApiProperty({
+    example: 'electronics',
+    description: 'The slug of the category',
+  })
+  slug: string;
 }
 
 export class CategoryListSimpleDataDto {

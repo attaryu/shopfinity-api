@@ -107,7 +107,7 @@ describe('ProductsController Client Listing (e2e)', () => {
       expect(product).toHaveProperty('id');
       expect(product).toHaveProperty('name');
       expect(product).toHaveProperty('slug');
-      expect(product).toHaveProperty('image');
+      expect(product).toHaveProperty('imageUrl');
       expect(product).toHaveProperty('price');
       expect(product).toHaveProperty('category');
       expect(product).toHaveProperty('brand');

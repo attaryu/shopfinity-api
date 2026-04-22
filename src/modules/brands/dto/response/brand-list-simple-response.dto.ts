@@ -12,6 +12,18 @@ export class SimpleBrandDto {
     description: 'The name of the brand',
   })
   name: string;
+
+  @ApiProperty({
+    example: 'apple',
+    description: 'The slug of the brand',
+  })
+  slug: string;
+
+  @ApiProperty({
+    example: 'brands/apple-logo.png',
+    description: 'The logo URL of the brand',
+  })
+  logoUrl: string;
 }
 
 export class BrandListSimpleDataDto {

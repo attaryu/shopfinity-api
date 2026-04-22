@@ -300,10 +300,10 @@ describe('CategoriesController (e2e)', () => {
         expect(Array.isArray(response.body.data.categories)).toBe(true);
         expect(response.body.data.categories.length).toBeGreaterThanOrEqual(4);
         
-        // Check that only id and name are present
+        // Check that id, name, and slug are present
         const firstCategory = response.body.data.categories[0];
-        expect(Object.keys(firstCategory)).toEqual(expect.arrayContaining(['id', 'name']));
-        expect(firstCategory.slug).toBeUndefined();
+        expect(Object.keys(firstCategory)).toEqual(expect.arrayContaining(['id', 'name', 'slug']));
+        expect(firstCategory.slug).toBeDefined();
         expect(firstCategory.productCount).toBeUndefined();
 
         // Check sorting (ASC)
