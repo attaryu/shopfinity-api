@@ -9,6 +9,7 @@ import { UsersModule } from './modules/users/users.module';
 import { CategoriesModule } from './modules/categories/categories.module';
 import { BrandsModule } from './modules/brands/brands.module';
 import { ProductsModule } from './modules/products/products.module';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { envValidationSchema } from './config/env.validation';
 
 @Module({
@@ -23,6 +24,7 @@ import { envValidationSchema } from './config/env.validation';
     CategoriesModule,
     BrandsModule,
     ProductsModule,
+    DashboardModule,
   ],
   controllers: [AppController],
   providers: [AppService],
