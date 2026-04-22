@@ -7,6 +7,7 @@ import { PrismaProvider } from './../src/common/providers/prisma.provider';
 import { HttpExceptionFilter } from './../src/common/filters/http-exception.filter';
 import { ResponseInterceptor } from './../src/common/interceptors/response.interceptor';
 import { Role } from '@prisma/client';
+import { MediaStorageProvider } from './../src/common/providers/media-storage.provider';
 
 jest.setTimeout(30000);
 
@@ -43,9 +44,20 @@ describe('BrandsController (e2e)', () => {
   };
 
   beforeAll(async () => {
+    const mockMediaStorageProvider = {
+      generateSignedUploadUrl: jest.fn().mockResolvedValue({
+        signUrl: 'https://mock-storage.com/upload-url',
+        path: 'brands/logos/mock-id-test.png',
+        token: 'mock-upload-token',
+      }),
+    };
+
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
-    }).compile();
+    })
+      .overrideProvider(MediaStorageProvider)
+      .useValue(mockMediaStorageProvider)
+      .compile();
 
     app = moduleFixture.createNestApplication();
 
@@ -116,6 +128,46 @@ describe('BrandsController (e2e)', () => {
       where: { email: testAdmin.email },
     });
     await app.close();
+  });
+
+  describe('/brands/upload-url (POST) - Get Upload URL', () => {
+    const uploadRequest = {
+      fileName: 'test-logo.png',
+      fileType: 'image/png',
+    };
+
+    it('should successfully generate a signed upload URL as admin', async () => {
+      const response = await request(app.getHttpServer())
+        .post('/brands/upload-url')
+        .set('Authorization', `Bearer ${adminAccessToken}`)
+        .send(uploadRequest)
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.signUrl).toBeDefined();
+      expect(response.body.data.path).toBeDefined();
+      expect(response.body.data.token).toBeDefined();
+    });
+
+    it('should fail validation if fileName is missing', async () => {
+      const response = await request(app.getHttpServer())
+        .post('/brands/upload-url')
+        .set('Authorization', `Bearer ${adminAccessToken}`)
+        .send({ fileType: 'image/png' })
+        .expect(400);
+
+      expect(response.body.success).toBe(false);
+      expect(response.body.error.details).toBeDefined();
+    });
+
+    it('should fail if lacking authorization', async () => {
+      const response = await request(app.getHttpServer())
+        .post('/brands/upload-url')
+        .send(uploadRequest)
+        .expect(401);
+
+      expect(response.body.success).toBe(false);
+    });
   });
 
   describe('/brands (POST) - Add Brand', () => {

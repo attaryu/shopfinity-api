@@ -1,12 +1,25 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { MediaStorageProvider } from 'src/common/providers/media-storage.provider';
 import { BrandsRepository } from './brands.repository';
 import { CreateBrandDto } from './dto/request/create-brand.dto';
 import { ListBrandsQueryDto } from './dto/request/list-brands-query.dto';
 import { UpdateBrandDto } from './dto/request/update-brand.dto';
+import { UploadUrlRequestDto } from './dto/request/upload-url-request.dto';
 
 @Injectable()
 export class BrandsService {
-  constructor(private readonly brandsRepository: BrandsRepository) {}
+  constructor(
+    private readonly brandsRepository: BrandsRepository,
+    private readonly mediaStorage: MediaStorageProvider,
+  ) {}
+
+  async generateUploadUrl(uploadUrlRequestDto: UploadUrlRequestDto) {
+    const { fileName } = uploadUrlRequestDto;
+    const randomId = crypto.randomUUID();
+    const path = `brands/logos/${randomId}-${fileName}`;
+
+    return this.mediaStorage.generateSignedUploadUrl(path);
+  }
 
   async create(createBrandDto: CreateBrandDto) {
     return this.brandsRepository.create(createBrandDto);

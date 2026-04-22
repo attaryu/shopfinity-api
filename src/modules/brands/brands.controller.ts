@@ -30,11 +30,33 @@ import { UpdateBrandDto } from './dto/request/update-brand.dto';
 import { ListBrandsQueryDto } from './dto/request/list-brands-query.dto';
 import { BrandListResponseDto } from './dto/response/brand-list-response.dto';
 import { SingleBrandResponseDto } from './dto/response/single-brand-response.dto';
+import { UploadUrlRequestDto } from './dto/request/upload-url-request.dto';
+import { UploadUrlResponseDto } from './dto/response/upload-url-response.dto';
 
 @ApiTags('brands')
 @Controller('brands')
 export class BrandsController {
   constructor(private readonly brandsService: BrandsService) {}
+
+  @Post('upload-url')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Get a signed URL for uploading a file (Admin only)' })
+  @ApiOkResponse({
+    description: 'Signed URL generated successfully',
+    type: UploadUrlResponseDto,
+  })
+  async getUploadUrl(
+    @Body() uploadUrlRequestDto: UploadUrlRequestDto,
+  ): Promise<ControllerResponse> {
+    const data = await this.brandsService.generateUploadUrl(uploadUrlRequestDto);
+    return {
+      message: 'Signed URL generated successfully',
+      data,
+    };
+  }
 
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)

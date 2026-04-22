@@ -10,4 +10,7 @@ export const envValidationSchema = Joi.object({
   JWT_ACCESS_EXPIRATION: Joi.string().default('15m'),
   JWT_REFRESH_EXPIRATION: Joi.string().default('7d'),
   JWT_REFRESH_DURATION: Joi.number().default(604800000), // 7 days in ms
+  SUPABASE_URL: Joi.string().required(),
+  SUPABASE_SERVICE_ROLE_KEY: Joi.string().required(),
+  SUPABASE_BUCKET: Joi.string().default('shopfinity'),
 });
