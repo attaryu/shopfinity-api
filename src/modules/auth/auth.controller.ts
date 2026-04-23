@@ -3,6 +3,7 @@ import type { Request, Response } from 'express';
 import {
   Body,
   Controller,
+  Delete,
   HttpCode,
   HttpStatus,
   Post,
@@ -10,24 +11,23 @@ import {
   Res,
   UnauthorizedException,
   UseGuards,
-  Delete,
 } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
+import { ApiTags } from '@nestjs/swagger';
 
-import { ControllerResponse } from 'src/common/types/controller-response';
-import type { User } from 'src/modules/users/types/user';
-import { AuthService } from './auth.service';
-import { User as UserDecorator } from 'src/common/decorators/user.decorator';
-import { SignUpRequestDto } from './dto/request/sign-up-request.dto';
-import { JwtAuthGuard } from 'src/core/guards/jwt-auth.guard';
-import { LocalAuthGuard } from 'src/core/guards/local-auth.guard';
 import {
   ApiLoginDocs,
   ApiLogoutDocs,
   ApiRefreshDocs,
   ApiSignupDocs,
-} from 'src/common/decorators/auth-swagger.decorator';
+} from '../../common/decorators/auth-swagger.decorator';
+import { User as UserDecorator } from '../../common/decorators/user.decorator';
+import { ControllerResponse } from '../../common/types/controller-response';
+import { JwtAuthGuard } from '../../core/guards/jwt-auth.guard';
+import { LocalAuthGuard } from '../../core/guards/local-auth.guard';
+import type { User } from '../../modules/users/types/user';
+import { AuthService } from './auth.service';
+import { SignUpRequestDto } from './dto/request/sign-up-request.dto';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -38,7 +38,9 @@ export class AuthController {
   ) {}
 
   private setCookies(response: Response, refreshToken: string) {
-    const refreshTokenExpiration = this.configService.get<number>('JWT_REFRESH_DURATION');
+    const refreshTokenExpiration = this.configService.get<number>(
+      'JWT_REFRESH_DURATION',
+    );
     response.cookie('refreshToken', refreshToken, {
       httpOnly: true,
       secure: this.configService.get<string>('NODE_ENV') === 'production',

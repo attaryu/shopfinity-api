@@ -6,10 +6,11 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
-import { Roles } from 'src/common/decorators/roles.decorator';
-import { JwtAuthGuard } from 'src/core/guards/jwt-auth.guard';
-import { RolesGuard } from 'src/core/guards/roles.guard';
-import { ControllerResponse } from 'src/common/types/controller-response';
+
+import { Roles } from '../../common/decorators/roles.decorator';
+import { JwtAuthGuard } from '../../core/guards/jwt-auth.guard';
+import { RolesGuard } from '../../core/guards/roles.guard';
+import { ControllerResponse } from '../../common/types/controller-response';
 import { DashboardService } from './dashboard.service';
 import { DashboardStatsResponseDto } from './dto/response/dashboard-stats-response.dto';
 

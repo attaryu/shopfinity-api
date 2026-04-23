@@ -9,7 +9,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 
-import { User } from 'src/modules/users/types/user';
+import { User } from '../../modules/users/types/user';
 import { UsersService } from '../users/users.service';
 import { SignUpRequestDto } from './dto/request/sign-up-request.dto';
 

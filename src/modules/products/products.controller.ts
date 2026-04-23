@@ -20,10 +20,11 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
-import { Roles } from 'src/common/decorators/roles.decorator';
-import { ControllerResponse } from 'src/common/types/controller-response';
-import { JwtAuthGuard } from 'src/core/guards/jwt-auth.guard';
-import { RolesGuard } from 'src/core/guards/roles.guard';
+
+import { Roles } from '../../common/decorators/roles.decorator';
+import { ControllerResponse } from '../../common/types/controller-response';
+import { JwtAuthGuard } from '../../core/guards/jwt-auth.guard';
+import { RolesGuard } from '../../core/guards/roles.guard';
 import { ClientListProductsQueryDto } from './dto/request/client-list-products-query.dto';
 import { CreateProductDto } from './dto/request/create-product.dto';
 import { ListProductsQueryDto } from './dto/request/list-products-query.dto';

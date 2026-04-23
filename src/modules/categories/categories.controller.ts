@@ -20,10 +20,11 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
-import { JwtAuthGuard } from 'src/core/guards/jwt-auth.guard';
-import { RolesGuard } from 'src/core/guards/roles.guard';
-import { Roles } from 'src/common/decorators/roles.decorator';
-import { ControllerResponse } from 'src/common/types/controller-response';
+
+import { JwtAuthGuard } from '../../core/guards/jwt-auth.guard';
+import { RolesGuard } from '../../core/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { ControllerResponse } from '../../common/types/controller-response';
 import { CategoriesService } from './categories.service';
 import { CreateCategoryDto } from './dto/request/create-category.dto';
 import { UpdateCategoryDto } from './dto/request/update-category.dto';
@@ -31,7 +32,6 @@ import { ListCategoriesQueryDto } from './dto/request/list-categories-query.dto'
 import { CategoryListResponseDto } from './dto/response/category-list-response.dto';
 import { SingleCategoryResponseDto } from './dto/response/single-category-response.dto';
 import { CategoryListSimpleResponseDto } from './dto/response/category-list-simple-response.dto';
-
 
 @ApiTags('categories')
 @Controller('categories')
@@ -96,9 +96,7 @@ export class CategoriesController {
     description: 'Category retrieved successfully',
     type: SingleCategoryResponseDto,
   })
-  async findOne(
-    @Param('id') id: string,
-  ): Promise<ControllerResponse> {
+  async findOne(@Param('id') id: string): Promise<ControllerResponse> {
     const category = await this.categoriesService.findById(id);
     return {
       message: 'Category retrieved successfully',
@@ -146,9 +144,7 @@ export class CategoriesController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Delete a category (Admin only)' })
   @ApiOkResponse({ description: 'Category deleted successfully' })
-  async remove(
-    @Param('id') id: string,
-  ): Promise<ControllerResponse> {
+  async remove(@Param('id') id: string): Promise<ControllerResponse> {
     await this.categoriesService.remove(id);
     return {
       message: 'Category deleted successfully',

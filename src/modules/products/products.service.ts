@@ -3,7 +3,8 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { MediaStorageProvider } from 'src/common/providers/media-storage.provider';
+
+import { MediaStorageProvider } from '../../common/providers/media-storage.provider';
 import { ClientListProductsQueryDto } from './dto/request/client-list-products-query.dto';
 import { CreateProductDto } from './dto/request/create-product.dto';
 import { ListProductsQueryDto } from './dto/request/list-products-query.dto';

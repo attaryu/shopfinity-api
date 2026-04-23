@@ -1,16 +1,16 @@
 import {
-  Controller,
-  Post,
   Body,
-  UseGuards,
-  HttpStatus,
-  HttpCode,
-  Get,
-  Query,
-  Param,
-  Put,
-  Patch,
+  Controller,
   Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Patch,
+  Post,
+  Put,
+  Query,
+  UseGuards,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -20,19 +20,20 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
-import { JwtAuthGuard } from 'src/core/guards/jwt-auth.guard';
-import { RolesGuard } from 'src/core/guards/roles.guard';
-import { Roles } from 'src/common/decorators/roles.decorator';
-import { ControllerResponse } from 'src/common/types/controller-response';
+
+import { Roles } from '../../common/decorators/roles.decorator';
+import { ControllerResponse } from '../../common/types/controller-response';
+import { JwtAuthGuard } from '../../core/guards/jwt-auth.guard';
+import { RolesGuard } from '../../core/guards/roles.guard';
 import { BrandsService } from './brands.service';
 import { CreateBrandDto } from './dto/request/create-brand.dto';
-import { UpdateBrandDto } from './dto/request/update-brand.dto';
 import { ListBrandsQueryDto } from './dto/request/list-brands-query.dto';
-import { BrandListResponseDto } from './dto/response/brand-list-response.dto';
-import { SingleBrandResponseDto } from './dto/response/single-brand-response.dto';
+import { UpdateBrandDto } from './dto/request/update-brand.dto';
 import { UploadUrlRequestDto } from './dto/request/upload-url-request.dto';
-import { UploadUrlResponseDto } from './dto/response/upload-url-response.dto';
+import { BrandListResponseDto } from './dto/response/brand-list-response.dto';
 import { BrandListSimpleResponseDto } from './dto/response/brand-list-simple-response.dto';
+import { SingleBrandResponseDto } from './dto/response/single-brand-response.dto';
+import { UploadUrlResponseDto } from './dto/response/upload-url-response.dto';
 
 @ApiTags('brands')
 @Controller('brands')
@@ -44,7 +45,9 @@ export class BrandsController {
   @Roles(Role.ADMIN)
   @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Get a signed URL for uploading a file (Admin only)' })
+  @ApiOperation({
+    summary: 'Get a signed URL for uploading a file (Admin only)',
+  })
   @ApiOkResponse({
     description: 'Signed URL generated successfully',
     type: UploadUrlResponseDto,
@@ -52,7 +55,8 @@ export class BrandsController {
   async getUploadUrl(
     @Body() uploadUrlRequestDto: UploadUrlRequestDto,
   ): Promise<ControllerResponse> {
-    const data = await this.brandsService.generateUploadUrl(uploadUrlRequestDto);
+    const data =
+      await this.brandsService.generateUploadUrl(uploadUrlRequestDto);
     return {
       message: 'Signed URL generated successfully',
       data,
@@ -84,7 +88,9 @@ export class BrandsController {
     description: 'Brands retrieved successfully',
     type: BrandListResponseDto,
   })
-  async findAll(@Query() query: ListBrandsQueryDto): Promise<ControllerResponse> {
+  async findAll(
+    @Query() query: ListBrandsQueryDto,
+  ): Promise<ControllerResponse> {
     const result = await this.brandsService.findAllPaginated(query);
     return {
       message: 'Brands retrieved successfully',
@@ -115,9 +121,7 @@ export class BrandsController {
     description: 'Brand retrieved successfully',
     type: SingleBrandResponseDto,
   })
-  async findOne(
-    @Param('id') id: string,
-  ): Promise<ControllerResponse> {
+  async findOne(@Param('id') id: string): Promise<ControllerResponse> {
     const brand = await this.brandsService.findById(id);
     return {
       message: 'Brand retrieved successfully',
@@ -165,9 +169,7 @@ export class BrandsController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Delete a brand (Admin only)' })
   @ApiOkResponse({ description: 'Brand deleted successfully' })
-  async remove(
-    @Param('id') id: string,
-  ): Promise<ControllerResponse> {
+  async remove(@Param('id') id: string): Promise<ControllerResponse> {
     await this.brandsService.remove(id);
     return {
       message: 'Brand deleted successfully',

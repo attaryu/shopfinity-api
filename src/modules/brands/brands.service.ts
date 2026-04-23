@@ -1,5 +1,10 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { MediaStorageProvider } from 'src/common/providers/media-storage.provider';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+
+import { MediaStorageProvider } from '../../common/providers/media-storage.provider';
 import { BrandsRepository } from './brands.repository';
 import { CreateBrandDto } from './dto/request/create-brand.dto';
 import { ListBrandsQueryDto } from './dto/request/list-brands-query.dto';

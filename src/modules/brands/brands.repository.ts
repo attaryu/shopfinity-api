@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaProvider } from 'src/common/providers/prisma.provider';
+
+import { PrismaProvider } from '../../common/providers/prisma.provider';
 import { CreateBrandDto } from './dto/request/create-brand.dto';
 import { UpdateBrandDto } from './dto/request/update-brand.dto';
 
