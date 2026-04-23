@@ -4,12 +4,12 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { MediaStorageProvider } from 'src/common/providers/media-storage.provider';
-import { ProductsRepository } from './products.repository';
-import { CreateProductDto } from './dto/request/create-product.dto';
-import { UpdateProductDto } from './dto/request/update-product.dto';
-import { ListProductsQueryDto } from './dto/request/list-products-query.dto';
 import { ClientListProductsQueryDto } from './dto/request/client-list-products-query.dto';
+import { CreateProductDto } from './dto/request/create-product.dto';
+import { ListProductsQueryDto } from './dto/request/list-products-query.dto';
+import { UpdateProductDto } from './dto/request/update-product.dto';
 import { UploadUrlRequestDto } from './dto/request/upload-url-request.dto';
+import { ProductsRepository } from './products.repository';
 
 @Injectable()
 export class ProductsService {
@@ -169,16 +169,18 @@ export class ProductsService {
     };
   }
 
-  async findById(id: string) {
-    const product = await this.productsRepository.findById(id);
+  async findOne(idOrSlug: string) {
+    const product = await this.productsRepository.findOne(idOrSlug);
+
     if (!product) {
-      throw new NotFoundException(`Product with ID ${id} not found`);
+      throw new NotFoundException(`Product not found`);
     }
+
     return product;
   }
 
   async update(id: string, updateProductDto: UpdateProductDto) {
-    const currentProduct = await this.findById(id);
+    const currentProduct = await this.findOne(id);
 
     let oldImageUrl: string | null = null;
     if (
@@ -211,7 +213,7 @@ export class ProductsService {
   }
 
   async remove(id: string) {
-    const product = await this.findById(id);
+    const product = await this.findOne(id);
     const result = await this.productsRepository.delete(id);
 
     if (product.imageUrl) {

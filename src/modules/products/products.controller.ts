@@ -1,16 +1,16 @@
 import {
-  Controller,
-  Post,
   Body,
-  UseGuards,
-  HttpStatus,
-  HttpCode,
-  Get,
-  Query,
-  Param,
-  Put,
-  Patch,
+  Controller,
   Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Patch,
+  Post,
+  Put,
+  Query,
+  UseGuards,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -20,18 +20,18 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
-import { JwtAuthGuard } from 'src/core/guards/jwt-auth.guard';
-import { RolesGuard } from 'src/core/guards/roles.guard';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { ControllerResponse } from 'src/common/types/controller-response';
-import { ProductsService } from './products.service';
-import { CreateProductDto } from './dto/request/create-product.dto';
-import { UpdateProductDto } from './dto/request/update-product.dto';
-import { ListProductsQueryDto } from './dto/request/list-products-query.dto';
-import { UploadUrlRequestDto } from './dto/request/upload-url-request.dto';
+import { JwtAuthGuard } from 'src/core/guards/jwt-auth.guard';
+import { RolesGuard } from 'src/core/guards/roles.guard';
 import { ClientListProductsQueryDto } from './dto/request/client-list-products-query.dto';
-import { UploadUrlResponseDto } from './dto/response/upload-url-response.dto';
+import { CreateProductDto } from './dto/request/create-product.dto';
+import { ListProductsQueryDto } from './dto/request/list-products-query.dto';
+import { UpdateProductDto } from './dto/request/update-product.dto';
+import { UploadUrlRequestDto } from './dto/request/upload-url-request.dto';
 import { ClientProductListResponseDto } from './dto/response/client-product-response.dto';
+import { UploadUrlResponseDto } from './dto/response/upload-url-response.dto';
+import { ProductsService } from './products.service';
 
 @ApiTags('products')
 @Controller('products')
@@ -43,7 +43,9 @@ export class ProductsController {
   @Roles(Role.ADMIN)
   @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Get a signed URL for uploading a product image (Admin only)' })
+  @ApiOperation({
+    summary: 'Get a signed URL for uploading a product image (Admin only)',
+  })
   @ApiOkResponse({
     description: 'Signed URL generated successfully',
     type: UploadUrlResponseDto,
@@ -51,7 +53,8 @@ export class ProductsController {
   async getUploadUrl(
     @Body() uploadUrlRequestDto: UploadUrlRequestDto,
   ): Promise<ControllerResponse> {
-    const data = await this.productsService.generateUploadUrl(uploadUrlRequestDto);
+    const data =
+      await this.productsService.generateUploadUrl(uploadUrlRequestDto);
     return {
       message: 'Signed URL generated successfully',
       data,
@@ -82,7 +85,9 @@ export class ProductsController {
   @ApiOkResponse({
     description: 'Products retrieved successfully',
   })
-  async findAll(@Query() query: ListProductsQueryDto): Promise<ControllerResponse> {
+  async findAll(
+    @Query() query: ListProductsQueryDto,
+  ): Promise<ControllerResponse> {
     const result = await this.productsService.findAllPaginated(query);
     return {
       message: 'Products retrieved successfully',
@@ -93,7 +98,8 @@ export class ProductsController {
 
   @Get('client')
   @ApiOperation({
-    summary: 'List products for client-side with specific filters and pagination',
+    summary:
+      'List products for client-side with specific filters and pagination',
   })
   @ApiOkResponse({
     description: 'Products retrieved successfully',
@@ -110,15 +116,16 @@ export class ProductsController {
     };
   }
 
-  @Get(':id')
-  @ApiOperation({ summary: 'Get a product by ID' })
+  @Get(':idOrSlug')
+  @ApiOperation({ summary: 'Get a product by ID or Slug' })
   @ApiOkResponse({
     description: 'Product retrieved successfully',
   })
   async findOne(
-    @Param('id') id: string,
+    @Param('idOrSlug') idOrSlug: string,
   ): Promise<ControllerResponse> {
-    const product = await this.productsService.findById(id);
+    const product = await this.productsService.findOne(idOrSlug);
+
     return {
       message: 'Product retrieved successfully',
       data: { product },
@@ -165,9 +172,7 @@ export class ProductsController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Delete a product (Admin only)' })
   @ApiOkResponse({ description: 'Product deleted successfully' })
-  async remove(
-    @Param('id') id: string,
-  ): Promise<ControllerResponse> {
+  async remove(@Param('id') id: string): Promise<ControllerResponse> {
     await this.productsService.remove(id);
     return {
       message: 'Product deleted successfully',

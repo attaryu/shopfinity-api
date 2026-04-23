@@ -40,9 +40,11 @@ export class ProductsRepository {
     return this.prisma.product.count({ where });
   }
 
-  async findById(id: string) {
-    return this.prisma.product.findUnique({
-      where: { id },
+  async findOne(idOrSlug: string) {
+    return this.prisma.product.findFirst({
+      where: {
+        OR: [{ id: idOrSlug }, { slug: idOrSlug }],
+      },
       include: {
         category: true,
         brand: true,
