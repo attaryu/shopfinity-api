@@ -25,13 +25,13 @@ describe('CategoriesController (e2e)', () => {
   };
 
   const initialCategory = {
-    name: 'Initial Category',
-    slug: 'initial-category',
+    name: `Initial Category ${timestamp}`,
+    slug: `initial-category-${timestamp}`,
   };
 
   const updateCategoryDto = {
-    name: 'Updated Category',
-    slug: 'updated-category',
+    name: `Updated Category ${timestamp}`,
+    slug: `updated-category-${timestamp}`,
   };
 
   beforeAll(async () => {
@@ -60,8 +60,9 @@ describe('CategoriesController (e2e)', () => {
     await prisma.category.deleteMany({
       where: {
         OR: [
-          { name: initialCategory.name },
-          { name: updateCategoryDto.name }
+          { slug: initialCategory.slug },
+          { slug: updateCategoryDto.slug },
+          { slug: { startsWith: 'new-category-' } }
         ]
       }
     });
@@ -104,8 +105,8 @@ describe('CategoriesController (e2e)', () => {
     await prisma.category.deleteMany({
       where: {
         OR: [
-          { name: initialCategory.name },
-          { name: updateCategoryDto.name }
+          { slug: initialCategory.slug },
+          { slug: updateCategoryDto.slug }
         ]
       }
     });
@@ -117,7 +118,7 @@ describe('CategoriesController (e2e)', () => {
 
   describe('/categories (POST) - Add Category', () => {
     it('should successfully create a new category as admin', async () => {
-      const newCategory = { name: 'New Category', slug: 'new-category' };
+      const newCategory = { name: `New Category ${timestamp}`, slug: `new-category-${timestamp}` };
       const response = await request(app.getHttpServer())
         .post('/categories')
         .set('Authorization', `Bearer ${adminAccessToken}`)
@@ -179,20 +180,18 @@ describe('CategoriesController (e2e)', () => {
   describe('/categories (GET) - List Categories', () => {
     beforeAll(async () => {
       // Clean up potential conflicts (unique constraints on name and slug)
-      await prisma.product.deleteMany({ where: { slug: 'laptop-test' } });
+      await prisma.product.deleteMany({ where: { slug: `laptop-test-${timestamp}` } });
       await prisma.brand.deleteMany({ 
         where: { 
           OR: [
-            { name: 'Test Brand Cat' },
-            { slug: 'test-brand-cat' }
+            { slug: `test-brand-cat-${timestamp}` }
           ]
         } 
       });
       await prisma.category.deleteMany({
         where: {
           OR: [
-            { slug: { in: ['electronics-test', 'fashion-test', 'home-living-test'] } },
-            { name: { in: ['Electronics Test', 'Fashion Test', 'Home & Living Test'] } }
+            { slug: { in: [`electronics-test-${timestamp}`, `fashion-test-${timestamp}`, `home-living-test-${timestamp}`] } },
           ]
         }
       });
@@ -200,24 +199,24 @@ describe('CategoriesController (e2e)', () => {
       // Seed extra categories for listing/pagination tests
       await prisma.category.createMany({
         data: [
-          { name: 'Electronics Test', slug: 'electronics-test' },
-          { name: 'Fashion Test', slug: 'fashion-test' },
-          { name: 'Home & Living Test', slug: 'home-living-test' },
+          { name: `Electronics Test ${timestamp}`, slug: `electronics-test-${timestamp}` },
+          { name: `Fashion Test ${timestamp}`, slug: `fashion-test-${timestamp}` },
+          { name: `Home & Living Test ${timestamp}`, slug: `home-living-test-${timestamp}` },
         ],
       });
       
       // Seed a product for aggregation test
-      const cat = await prisma.category.findUnique({ where: { slug: 'electronics-test' } });
+      const cat = await prisma.category.findUnique({ where: { slug: `electronics-test-${timestamp}` } });
       const brand = await prisma.brand.create({
-        data: { name: 'Test Brand Cat', slug: 'test-brand-cat', logoUrl: 'http://example.com/logo.png' }
+        data: { name: `Test Brand Cat ${timestamp}`, slug: `test-brand-cat-${timestamp}`, logoUrl: 'http://example.com/logo.png' }
       });
       
       if (cat) {
         try {
           await prisma.product.create({
             data: {
-              name: 'Laptop Test',
-              slug: 'laptop-test',
+              name: `Laptop Test ${timestamp}`,
+              slug: `laptop-test-${timestamp}`,
               description: 'Powerful laptop',
               price: 1500,
               stock: 10,
@@ -234,11 +233,11 @@ describe('CategoriesController (e2e)', () => {
     });
 
     afterAll(async () => {
-      await prisma.product.deleteMany({ where: { slug: 'laptop-test' } });
-      await prisma.brand.deleteMany({ where: { slug: 'test-brand-cat' } });
+      await prisma.product.deleteMany({ where: { slug: `laptop-test-${timestamp}` } });
+      await prisma.brand.deleteMany({ where: { slug: `test-brand-cat-${timestamp}` } });
       await prisma.category.deleteMany({
         where: {
-          slug: { in: ['electronics-test', 'fashion-test', 'home-living-test'] }
+          slug: { in: [`electronics-test-${timestamp}`, `fashion-test-${timestamp}`, `home-living-test-${timestamp}`] }
         }
       });
     });
@@ -253,18 +252,18 @@ describe('CategoriesController (e2e)', () => {
       expect(response.body.data.categories.length).toBeGreaterThanOrEqual(4); 
       
       // Check for productCount
-      const electronics = response.body.data.categories.find(c => c.slug === 'electronics-test');
+      const electronics = response.body.data.categories.find(c => c.slug === `electronics-test-${timestamp}`);
       expect(electronics).toBeDefined();
       expect(electronics.productCount).toBe(1);
     });
 
     it('should filter categories by search term', async () => {
       const response = await request(app.getHttpServer())
-        .get('/categories?search=Fashion')
+        .get(`/categories?search=Fashion Test ${timestamp}`)
         .expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.data.categories.some(c => c.name.includes('Fashion'))).toBe(true);
+      expect(response.body.data.categories.some(c => c.name.includes(`Fashion Test ${timestamp}`))).toBe(true);
     });
 
     it('should sort categories by name descending', async () => {
@@ -340,7 +339,7 @@ describe('CategoriesController (e2e)', () => {
     });
     
     it('should successfully update a category using PATCH', async () => {
-      const patchData = { name: 'Partially Updated Category' };
+      const patchData = { name: `Partially Updated Category ${timestamp}` };
       const response = await request(app.getHttpServer())
         .patch(`/categories/${createdCategoryId}`)
         .set('Authorization', `Bearer ${adminAccessToken}`)

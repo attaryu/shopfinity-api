@@ -165,6 +165,9 @@ describe('AuthController (e2e)', () => {
 
   describe('/auth/refresh (POST)', () => {
     it('should refresh token successfully with valid cookie', async () => {
+      // Add a small delay to ensure the timestamp (iat) in the JWT changes
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      
       const response = await request(app.getHttpServer())
         .post('/auth/refresh')
         .set('Cookie', jwtRefreshTokenCookie)

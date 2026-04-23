@@ -8,13 +8,16 @@ import { HttpExceptionFilter } from './../src/common/filters/http-exception.filt
 import { ResponseInterceptor } from './../src/common/interceptors/response.interceptor';
 import { MediaStorageProvider } from './../src/common/providers/media-storage.provider';
 
+jest.setTimeout(30000);
+
 describe('ProductsController Client Listing (e2e)', () => {
   let app: INestApplication;
   let prisma: PrismaProvider;
   let testCategoryId: string;
   let testBrandId: string;
-  let testCategorySlug = 'client-test-category';
-  let testBrandSlug = 'client-test-brand';
+  const timestamp = Date.now();
+  let testCategorySlug = `client-test-category-${timestamp}`;
+  let testBrandSlug = `client-test-brand-${timestamp}`;
 
   beforeAll(async () => {
     const mockMediaStorageProvider = {
@@ -44,29 +47,41 @@ describe('ProductsController Client Listing (e2e)', () => {
     await app.init();
     prisma = app.get(PrismaProvider);
 
-    // Setup test data - Clean everything first for isolation
-    await prisma.product.deleteMany({});
-    await prisma.category.deleteMany({});
-    await prisma.brand.deleteMany({});
+    // Setup test data - Surgical cleanup of lingering data from past failures
+    await prisma.product.deleteMany({
+      where: {
+        slug: { contains: `-${timestamp}` },
+      },
+    });
+    await prisma.category.deleteMany({
+      where: {
+        slug: testCategorySlug,
+      },
+    });
+    await prisma.brand.deleteMany({
+      where: {
+        slug: testBrandSlug,
+      },
+    });
 
     const category = await prisma.category.create({
-      data: { name: 'Client Test Category', slug: testCategorySlug },
+      data: { name: `Client Test Category ${timestamp}`, slug: testCategorySlug },
     });
     testCategoryId = category.id;
 
     const brand = await prisma.brand.create({
       data: {
-        name: 'Client Test Brand',
+        name: `Client Test Brand ${timestamp}`,
         slug: testBrandSlug,
-        logoUrl: 'brand/client-test.png',
+        logoUrl: `brand/client-test-${timestamp}.png`,
       },
     });
     testBrandId = brand.id;
 
     // Create 15 products to test pagination (limit 12)
     const productsData = Array.from({ length: 15 }).map((_, i) => ({
-      name: `Product ${i + 1}`,
-      slug: `product-${i + 1}`,
+      name: `Product ${i + 1} ${timestamp}`,
+      slug: `product-${i + 1}-${timestamp}`,
       description: `Description ${i + 1}`,
       price: (i + 1) * 10,
       stock: 10,
@@ -85,18 +100,22 @@ describe('ProductsController Client Listing (e2e)', () => {
   afterAll(async () => {
     await prisma.product.deleteMany({
       where: {
-        slug: { startsWith: 'product-' },
+        slug: { contains: `-${timestamp}` },
       },
     });
-    await prisma.category.delete({ where: { id: testCategoryId } });
-    await prisma.brand.delete({ where: { id: testBrandId } });
+    if (testCategoryId) {
+      await prisma.category.delete({ where: { id: testCategoryId } }).catch(() => {});
+    }
+    if (testBrandId) {
+      await prisma.brand.delete({ where: { id: testBrandId } }).catch(() => {});
+    }
     await app.close();
   });
 
   describe('/products/client (GET)', () => {
     it('should return 12 products by default, sorted by newest', async () => {
       const response = await request(app.getHttpServer())
-        .get('/products/client')
+        .get(`/products/client?brand=${testBrandSlug}`)
         .expect(200);
 
       expect(response.body.success).toBe(true);
@@ -121,7 +140,7 @@ describe('ProductsController Client Listing (e2e)', () => {
 
     it('should handle pagination with nextOffset', async () => {
       const response = await request(app.getHttpServer())
-        .get('/products/client?nextOffset=12')
+        .get(`/products/client?brand=${testBrandSlug}&nextOffset=12`)
         .expect(200);
 
       expect(response.body.success).toBe(true);
@@ -130,12 +149,12 @@ describe('ProductsController Client Listing (e2e)', () => {
 
     it('should filter by search term', async () => {
       const response = await request(app.getHttpServer())
-        .get('/products/client?search=Product 10')
+        .get(`/products/client?search=Product 10 ${timestamp}`)
         .expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data.products).toHaveLength(1);
-      expect(response.body.data.products[0].name).toBe('Product 10');
+      expect(response.body.data.products[0].name).toBe(`Product 10 ${timestamp}`);
     });
 
     it('should filter by brand slug', async () => {
@@ -162,7 +181,7 @@ describe('ProductsController Client Listing (e2e)', () => {
 
     it('should filter by minPrice and maxPrice', async () => {
       const response = await request(app.getHttpServer())
-        .get('/products/client?minPrice=50&maxPrice=100')
+        .get(`/products/client?brand=${testBrandSlug}&minPrice=50&maxPrice=100`)
         .expect(200);
 
       expect(response.body.success).toBe(true);

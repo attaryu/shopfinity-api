@@ -29,30 +29,30 @@ describe('ProductsController (e2e)', () => {
   };
 
   const newProduct = {
-    name: 'iPhone 15 Pro',
-    slug: 'iphone-15-pro',
+    name: `iPhone 15 Pro ${timestamp}`,
+    slug: `iphone-15-pro-${timestamp}`,
     description: 'The latest iPhone with titanium design',
     price: 999.99,
     stock: 50,
-    imageUrl: 'products/iphone-15.png',
+    imageUrl: `products/iphone-15-${timestamp}.png`,
   };
 
   const initialProduct = {
-    name: 'Initial Product',
-    slug: 'initial-product',
+    name: `Initial Product ${timestamp}`,
+    slug: `initial-product-${timestamp}`,
     description: 'Initial description',
     price: 100,
     stock: 10,
-    imageUrl: 'products/initial.png',
+    imageUrl: `products/initial-${timestamp}.png`,
   };
 
   const updateProductDto = {
-    name: 'Updated Product',
-    slug: 'updated-product',
+    name: `Updated Product ${timestamp}`,
+    slug: `updated-product-${timestamp}`,
     description: 'Updated description',
     price: 150.5,
     stock: 20,
-    imageUrl: 'products/updated.png',
+    imageUrl: `products/updated-${timestamp}.png`,
   };
 
   beforeAll(async () => {
@@ -98,17 +98,19 @@ describe('ProductsController (e2e)', () => {
           { slug: newProduct.slug },
           { slug: initialProduct.slug },
           { slug: updateProductDto.slug },
-          { slug: 'search-product' },
+          { slug: `search-product-${timestamp}` },
+          { slug: `lc-prod-update-test-${timestamp}` },
+          { slug: `lc-prod-delete-test-${timestamp}` },
         ],
       },
     });
 
     await prisma.category.deleteMany({
-      where: { slug: 'test-category-prod' },
+      where: { slug: `test-category-prod-${timestamp}` },
     });
 
     await prisma.brand.deleteMany({
-      where: { slug: 'test-brand-prod' },
+      where: { slug: `test-brand-prod-${timestamp}` },
     });
 
     await prisma.user.deleteMany({
@@ -117,15 +119,15 @@ describe('ProductsController (e2e)', () => {
 
     // Create prerequisites
     const category = await prisma.category.create({
-      data: { name: 'Test Category Prod', slug: 'test-category-prod' },
+      data: { name: `Test Category Prod ${timestamp}`, slug: `test-category-prod-${timestamp}` },
     });
     testCategoryId = category.id;
 
     const brand = await prisma.brand.create({
       data: {
-        name: 'Test Brand Prod',
-        slug: 'test-brand-prod',
-        logoUrl: 'brand/test.png',
+        name: `Test Brand Prod ${timestamp}`,
+        slug: `test-brand-prod-${timestamp}`,
+        logoUrl: `brand/test-${timestamp}.png`,
       },
     });
     testBrandId = brand.id;
@@ -172,7 +174,7 @@ describe('ProductsController (e2e)', () => {
           { slug: newProduct.slug },
           { slug: initialProduct.slug },
           { slug: updateProductDto.slug },
-          { slug: 'search-product' },
+          { slug: `search-product-${timestamp}` },
         ],
       },
     });
@@ -242,8 +244,8 @@ describe('ProductsController (e2e)', () => {
         .set('Authorization', `Bearer ${adminAccessToken}`)
         .send({
           ...newProduct,
-          name: 'Not Found Image Product',
-          slug: 'not-found-image',
+          name: `Not Found Image Product ${timestamp}`,
+          slug: `not-found-image-${timestamp}`,
           categoryId: testCategoryId,
           brandId: testBrandId,
         })
@@ -305,12 +307,12 @@ describe('ProductsController (e2e)', () => {
       await prisma.product.createMany({
         data: [
           {
-            name: 'Search Product',
-            slug: 'search-product',
+            name: `Search Product ${timestamp}`,
+            slug: `search-product-${timestamp}`,
             description: 'Searchable desc',
             price: 50.0,
             stock: 5,
-            imageUrl: 'search.png',
+            imageUrl: `search-${timestamp}.png`,
             categoryId: testCategoryId,
             brandId: testBrandId,
           },
@@ -331,11 +333,11 @@ describe('ProductsController (e2e)', () => {
 
     it('should filter products by search term', async () => {
       const response = await request(app.getHttpServer())
-        .get('/products?search=Search')
+        .get(`/products?search=Search Product ${timestamp}`)
         .expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.data.products[0].name).toBe('Search Product');
+      expect(response.body.data.products[0].name).toBe(`Search Product ${timestamp}`);
     });
 
     it('should filter products by categoryId', async () => {
@@ -394,7 +396,7 @@ describe('ProductsController (e2e)', () => {
     });
 
     it('should successfully partially update a product (PATCH)', async () => {
-      const patchData = { name: 'Partially Updated Product' };
+      const patchData = { name: `Partially Updated Product ${timestamp}` };
       const response = await request(app.getHttpServer())
         .patch(`/products/${createdProductId}`)
         .set('Authorization', `Bearer ${adminAccessToken}`)
@@ -424,12 +426,12 @@ describe('ProductsController (e2e)', () => {
       // Create a fresh product for this test
       const productToUpdate = await prisma.product.create({
         data: {
-          name: 'Life Cycle Update Test',
-          slug: 'lc-prod-update-test',
+          name: `Life Cycle Update Test ${timestamp}`,
+          slug: `lc-prod-update-test-${timestamp}`,
           description: 'test',
           price: 10,
           stock: 1,
-          imageUrl: 'products/old-image.png',
+          imageUrl: `products/old-image-${timestamp}.png`,
           categoryId: testCategoryId,
           brandId: testBrandId,
         },
@@ -443,11 +445,11 @@ describe('ProductsController (e2e)', () => {
       const response = await request(app.getHttpServer())
         .patch(`/products/${productToUpdate.id}`)
         .set('Authorization', `Bearer ${adminAccessToken}`)
-        .send({ imageUrl: 'products/new-image.png' })
+        .send({ imageUrl: `products/new-image-${timestamp}.png` })
         .expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(deleteSpy).toHaveBeenCalledWith('products/old-image.png');
+      expect(deleteSpy).toHaveBeenCalledWith(`products/old-image-${timestamp}.png`);
 
       // Cleanup
       await prisma.product.delete({ where: { id: productToUpdate.id } });
@@ -483,12 +485,12 @@ describe('ProductsController (e2e)', () => {
       // Seed a new product specifically for deletion test
       const productToDelete = await prisma.product.create({
         data: {
-          name: 'Life Cycle Delete Test',
-          slug: 'lc-prod-delete-test',
+          name: `Life Cycle Delete Test ${timestamp}`,
+          slug: `lc-prod-delete-test-${timestamp}`,
           description: 'test',
           price: 10,
           stock: 1,
-          imageUrl: 'products/delete-me.png',
+          imageUrl: `products/delete-me-${timestamp}.png`,
           categoryId: testCategoryId,
           brandId: testBrandId,
         },
@@ -503,7 +505,7 @@ describe('ProductsController (e2e)', () => {
         .expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(deleteSpy).toHaveBeenCalledWith('products/delete-me.png');
+      expect(deleteSpy).toHaveBeenCalledWith(`products/delete-me-${timestamp}.png`);
     });
   });
 });

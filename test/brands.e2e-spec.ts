@@ -26,47 +26,47 @@ describe('BrandsController (e2e)', () => {
   };
 
   const newBrand = {
-    name: 'Apple',
-    slug: 'apple',
+    name: `Apple ${timestamp}`,
+    slug: `apple-${timestamp}`,
     logoUrl: `brand/apple-logo-${timestamp}.png`,
   };
 
   const updateBrandDto = {
-    name: 'Updated Brand',
-    slug: 'updated-brand',
-    logoUrl: 'brand/updated-logo.png',
+    name: `Updated Brand ${timestamp}`,
+    slug: `updated-brand-${timestamp}`,
+    logoUrl: `brand/updated-logo-${timestamp}.png`,
   };
 
   let createdBrandId: string;
   const initialBrand = {
-    name: 'Initial Brand',
-    slug: 'initial-brand',
-    logoUrl: 'brand/initial-logo.png',
+    name: `Initial Brand ${timestamp}`,
+    slug: `initial-brand-${timestamp}`,
+    logoUrl: `brand/initial-logo-${timestamp}.png`,
   };
 
   const createdBrandsSlugs = [
-    'apple',
-    'updated-brand',
-    'initial-brand',
-    'samsung',
-    'sony',
-    'nike',
-    'lc-update-test',
-    'lc-delete-test',
-    'not-found-logo',
+    `apple-${timestamp}`,
+    `updated-brand-${timestamp}`,
+    `initial-brand-${timestamp}`,
+    `samsung-${timestamp}`,
+    `sony-${timestamp}`,
+    `nike-${timestamp}`,
+    `lc-update-test-${timestamp}`,
+    `lc-delete-test-${timestamp}`,
+    `not-found-logo-${timestamp}`,
   ];
 
   const createdBrandsNames = [
-    'Apple',
-    'Updated Brand',
-    'Initial Brand',
-    'Samsung',
-    'Sony',
-    'Nike',
-    'Life Cycle Update Test',
-    'Life Cycle Delete Test',
-    'Partially Updated Brand',
-    'Not Found Logo Brand',
+    `Apple ${timestamp}`,
+    `Updated Brand ${timestamp}`,
+    `Initial Brand ${timestamp}`,
+    `Samsung ${timestamp}`,
+    `Sony ${timestamp}`,
+    `Nike ${timestamp}`,
+    `Life Cycle Update Test ${timestamp}`,
+    `Life Cycle Delete Test ${timestamp}`,
+    `Partially Updated Brand ${timestamp}`,
+    `Not Found Logo Brand ${timestamp}`,
   ];
 
   beforeAll(async () => {
@@ -230,8 +230,8 @@ describe('BrandsController (e2e)', () => {
         .set('Authorization', `Bearer ${adminAccessToken}`)
         .send({
           ...newBrand,
-          name: 'Not Found Logo Brand',
-          slug: 'not-found-logo',
+          name: `Not Found Logo Brand ${timestamp}`,
+          slug: `not-found-logo-${timestamp}`,
         })
         .expect(400);
 
@@ -297,9 +297,9 @@ describe('BrandsController (e2e)', () => {
       // Seed extra brands for listing tests
       await prisma.brand.createMany({
         data: [
-          { name: 'Samsung', slug: 'samsung', logoUrl: 'brand/samsung.png' },
-          { name: 'Sony', slug: 'sony', logoUrl: 'brand/sony.png' },
-          { name: 'Nike', slug: 'nike', logoUrl: 'brand/nike.png' },
+          { name: `Samsung ${timestamp}`, slug: `samsung-${timestamp}`, logoUrl: `brand/samsung-${timestamp}.png` },
+          { name: `Sony ${timestamp}`, slug: `sony-${timestamp}`, logoUrl: `brand/sony-${timestamp}.png` },
+          { name: `Nike ${timestamp}`, slug: `nike-${timestamp}`, logoUrl: `brand/nike-${timestamp}.png` },
         ],
       });
     });
@@ -317,11 +317,11 @@ describe('BrandsController (e2e)', () => {
 
     it('should filter brands by search term', async () => {
       const response = await request(app.getHttpServer())
-        .get('/brands?search=Samsung')
+        .get(`/brands?search=Samsung ${timestamp}`)
         .expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.data.brands[0].name).toBe('Samsung');
+      expect(response.body.data.brands[0].name).toBe(`Samsung ${timestamp}`);
     });
 
     it('should sort brands by name desc', async () => {
@@ -388,7 +388,7 @@ describe('BrandsController (e2e)', () => {
     });
 
     it('should successfully partially update a brand (PATCH)', async () => {
-      const patchData = { name: 'Partially Updated Brand' };
+      const patchData = { name: `Partially Updated Brand ${timestamp}` };
       const response = await request(app.getHttpServer())
         .patch(`/brands/${createdBrandId}`)
         .set('Authorization', `Bearer ${adminAccessToken}`)
@@ -404,9 +404,9 @@ describe('BrandsController (e2e)', () => {
       // Create a fresh brand for this test
       const brandToUpdate = await prisma.brand.create({
         data: {
-          name: 'Life Cycle Update Test',
-          slug: 'lc-update-test',
-          logoUrl: 'brand/old-logo.png',
+          name: `Life Cycle Update Test ${timestamp}`,
+          slug: `lc-update-test-${timestamp}`,
+          logoUrl: `brand/old-logo-${timestamp}.png`,
         },
       });
 
@@ -418,11 +418,11 @@ describe('BrandsController (e2e)', () => {
       const response = await request(app.getHttpServer())
         .patch(`/brands/${brandToUpdate.id}`)
         .set('Authorization', `Bearer ${adminAccessToken}`)
-        .send({ logoUrl: 'brand/new-logo.png' })
+        .send({ logoUrl: `brand/new-logo-${timestamp}.png` })
         .expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(deleteSpy).toHaveBeenCalledWith('brand/old-logo.png');
+      expect(deleteSpy).toHaveBeenCalledWith(`brand/old-logo-${timestamp}.png`);
     });
 
     it('should fail if brand does not exist', async () => {
@@ -465,9 +465,9 @@ describe('BrandsController (e2e)', () => {
       // Seed a new brand specifically for deletion test
       const brandToDelete = await prisma.brand.create({
         data: {
-          name: 'Life Cycle Delete Test',
-          slug: 'lc-delete-test',
-          logoUrl: 'brand/delete-me.png',
+          name: `Life Cycle Delete Test ${timestamp}`,
+          slug: `lc-delete-test-${timestamp}`,
+          logoUrl: `brand/delete-me-${timestamp}.png`,
         },
       });
 
@@ -480,7 +480,7 @@ describe('BrandsController (e2e)', () => {
         .expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(deleteSpy).toHaveBeenCalledWith('brand/delete-me.png');
+      expect(deleteSpy).toHaveBeenCalledWith(`brand/delete-me-${timestamp}.png`);
     });
 
     it('should fail if brand does not exist', async () => {
