@@ -221,4 +221,13 @@ export class OrdersService {
 
     return this.ordersRepository.updatePaymentProof(id, dto.path);
   }
+
+  // ─── Cash Flow API (Admin) ───────────────────────────────────────────────────
+  async getCashFlowSummary() {
+    return this.ordersRepository.getCashFlowSummary();
+  }
+
+  async getCashFlowTransactions() {
+    return this.ordersRepository.getCashFlowTransactions();
+  }
 }
