@@ -29,6 +29,8 @@ import { ListOrdersQueryDto } from './dto/request/list-orders-query.dto';
 import { UpdateOrderStatusDto } from './dto/request/update-order-status.dto';
 import { UploadPaymentProofDto } from './dto/request/upload-payment-proof.dto';
 import { UploadUrlRequestDto } from './dto/request/upload-url-request.dto';
+import { CashFlowSummaryResponseDto } from './dto/response/cash-flow-summary.dto';
+import { CashFlowTransactionsResponseDto } from './dto/response/cash-flow-transaction.dto';
 import { OrdersService } from './orders.service';
 
 @ApiTags('orders')
@@ -107,6 +109,46 @@ export class OrdersController {
       message: 'Orders retrieved successfully',
       data: { orders: result.orders },
       meta: result.meta,
+    };
+  }
+
+  // ─── GET /orders/cash-flow/summary (Admin) ──────────────────────────────────
+  @Get('cash-flow/summary')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Get admin cash flow summary analytics',
+  })
+  @ApiOkResponse({
+    description: 'Cash flow summary retrieved successfully',
+    type: CashFlowSummaryResponseDto,
+  })
+  async getCashFlowSummary(): Promise<ControllerResponse> {
+    const data = await this.ordersService.getCashFlowSummary();
+    return {
+      message: 'Cash flow summary retrieved successfully',
+      data,
+    };
+  }
+
+  // ─── GET /orders/cash-flow/transactions (Admin) ──────────────────────────────
+  @Get('cash-flow/transactions')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Get 10 most recent non-cancelled order transactions for preview',
+  })
+  @ApiOkResponse({
+    description: 'Recent cash flow transactions retrieved successfully',
+    type: CashFlowTransactionsResponseDto,
+  })
+  async getCashFlowTransactions(): Promise<ControllerResponse> {
+    const data = await this.ordersService.getCashFlowTransactions();
+    return {
+      message: 'Recent cash flow transactions retrieved successfully',
+      data,
     };
   }
 
