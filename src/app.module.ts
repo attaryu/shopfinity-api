@@ -10,6 +10,8 @@ import { CategoriesModule } from './modules/categories/categories.module';
 import { BrandsModule } from './modules/brands/brands.module';
 import { ProductsModule } from './modules/products/products.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { OrdersModule } from './modules/orders/orders.module';
+import { CartModule } from './modules/cart/cart.module';
 import { envValidationSchema } from './config/env.validation';
 
 @Module({
@@ -25,6 +27,8 @@ import { envValidationSchema } from './config/env.validation';
     BrandsModule,
     ProductsModule,
     DashboardModule,
+    OrdersModule,
+    CartModule,
   ],
   controllers: [AppController],
   providers: [AppService],
