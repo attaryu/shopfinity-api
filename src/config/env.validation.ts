@@ -13,4 +13,5 @@ export const envValidationSchema = Joi.object({
   SUPABASE_URL: Joi.string().required(),
   SUPABASE_SERVICE_ROLE_KEY: Joi.string().required(),
   SUPABASE_BUCKET: Joi.string().default('shopfinity'),
+  DIRECT_DATABASE_URL: Joi.string().required(),
 });
