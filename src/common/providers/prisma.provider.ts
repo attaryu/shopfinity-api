@@ -11,6 +11,9 @@ export class PrismaProvider
   constructor() {
     const pool = new Pool({
       connectionString: process.env.DIRECT_DATABASE_URL,
+      max: 5,
+      idleTimeoutMillis: 10000,
+      connectionTimeoutMillis: 5000,
     });
     const adapter = new PrismaPg(pool);
 
