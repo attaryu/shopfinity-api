@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class UploadUrlDataDto {
   @ApiProperty({
-    example: 'https://xxx.supabase.co/storage/v1/s3/signed-url',
+    example: 'https://shopfinity.s3.ap-southeast-1.amazonaws.com/brands/logos/filename.png?...',
     description: 'The signed URL to upload the file to',
   })
   signUrl: string;
@@ -12,12 +12,6 @@ export class UploadUrlDataDto {
     description: 'The path where the file will be stored',
   })
   path: string;
-
-  @ApiProperty({
-    example: 'xxx.yyy.zzz',
-    description: 'The upload token for authorization',
-  })
-  token: string;
 }
 
 export class UploadUrlResponseDto {
