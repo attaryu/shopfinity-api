@@ -20,13 +20,16 @@ export class MediaStorageProvider {
 
     this.bucket = bucketName;
 
-    this.s3Client = new S3Client({
-      region,
-      credentials: {
+    const config = { region };
+
+    if (accessKeyId && secretAccessKey) {
+      config['credentials'] = {
         accessKeyId,
         secretAccessKey,
-      },
-    });
+      };
+    }
+
+    this.s3Client = new S3Client(config);
   }
 
   async generateSignedUploadUrl(path: string) {
