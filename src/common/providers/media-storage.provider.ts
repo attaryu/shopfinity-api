@@ -1,67 +1,82 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { S3Client, PutObjectCommand, HeadObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 @Injectable()
 export class MediaStorageProvider {
-  private supabase: SupabaseClient;
+  private s3Client: S3Client;
   private bucket: string;
 
   constructor(private configService: ConfigService) {
-    const supabaseUrl = this.configService.get<string>('SUPABASE_URL');
-    const supabaseKey = this.configService.get<string>(
-      'SUPABASE_SERVICE_ROLE_KEY',
-    );
-    this.bucket = this.configService.get<string>(
-      'SUPABASE_BUCKET',
-      'shopfinity',
-    );
+    const accessKeyId = this.configService.get<string>('AWS_ACCESS_KEY_ID');
+    const secretAccessKey = this.configService.get<string>('AWS_SECRET_ACCESS_KEY');
+    const region = this.configService.get<string>('AWS_REGION');
+    const bucketName = this.configService.get<string>('AWS_S3_BUCKET');
 
-    if (!supabaseUrl || !supabaseKey) {
-      throw new Error('Supabase configuration is missing');
+    if (!accessKeyId || !secretAccessKey || !region || !bucketName) {
+      throw new Error('AWS configuration is missing');
     }
 
-    this.supabase = createClient(supabaseUrl, supabaseKey);
+    this.bucket = bucketName;
+
+    this.s3Client = new S3Client({
+      region,
+      credentials: {
+        accessKeyId,
+        secretAccessKey,
+      },
+    });
   }
 
   async generateSignedUploadUrl(path: string) {
-    const { data, error } = await this.supabase.storage
-      .from(this.bucket)
-      .createSignedUploadUrl(path);
+    try {
+      const command = new PutObjectCommand({
+        Bucket: this.bucket,
+        Key: path,
+      });
 
-    if (error) {
+      const signUrl = await getSignedUrl(this.s3Client, command, { expiresIn: 3600 });
+
+      return {
+        signUrl,
+        path,
+      };
+    } catch (error: any) {
       throw new InternalServerErrorException(
         `Failed to generate signed upload URL: ${error.message}`,
       );
     }
-
-    return {
-      signUrl: data.signedUrl,
-      path: data.path,
-      token: data.token,
-    };
   }
 
   async exists(path: string): Promise<boolean> {
-    const { data, error } = await this.supabase.storage
-      .from(this.bucket)
-      .exists(path);
+    try {
+      const command = new HeadObjectCommand({
+        Bucket: this.bucket,
+        Key: path,
+      });
 
-    if (error) {
+      await this.s3Client.send(command);
+      return true;
+    } catch (error: any) {
+      if (error.name === 'NoSuchKey' || error.name === 'NotFound' || error.$metadata?.httpStatusCode === 404) {
+        return false;
+      }
       throw new InternalServerErrorException(
         `Failed to check if file exists: ${error.message}`,
       );
     }
-
-    return data;
   }
 
   async delete(path: string): Promise<void> {
-    const { error } = await this.supabase.storage
-      .from(this.bucket)
-      .remove([path]);
+    try {
+      const command = new DeleteObjectCommand({
+        Bucket: this.bucket,
+        Key: path,
+      });
 
-    if (error) {
+      await this.s3Client.send(command);
+    } catch (error: any) {
       throw new InternalServerErrorException(
         `Failed to delete file: ${error.message}`,
       );

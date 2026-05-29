@@ -74,7 +74,6 @@ describe('BrandsController (e2e)', () => {
       generateSignedUploadUrl: jest.fn().mockResolvedValue({
         signUrl: 'https://mock-storage.com/upload-url',
         path: 'brands/logos/mock-id-test.png',
-        token: 'mock-upload-token',
       }),
       exists: jest.fn().mockResolvedValue(true),
       delete: jest.fn().mockResolvedValue(undefined),
@@ -181,7 +180,6 @@ describe('BrandsController (e2e)', () => {
       expect(response.body.success).toBe(true);
       expect(response.body.data.signUrl).toBeDefined();
       expect(response.body.data.path).toBeDefined();
-      expect(response.body.data.token).toBeDefined();
     });
 
     it('should fail validation if fileName is missing', async () => {

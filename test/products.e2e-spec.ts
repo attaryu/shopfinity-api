@@ -60,7 +60,6 @@ describe('ProductsController (e2e)', () => {
       generateSignedUploadUrl: jest.fn().mockResolvedValue({
         signUrl: 'https://mock-storage.com/upload-url',
         path: 'products/images/mock-id-test.png',
-        token: 'mock-upload-token',
       }),
       exists: jest.fn().mockResolvedValue(true),
       delete: jest.fn().mockResolvedValue(undefined),
