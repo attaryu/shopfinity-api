@@ -14,7 +14,7 @@ export class MediaStorageProvider {
     const region = this.configService.get<string>('AWS_REGION');
     const bucketName = this.configService.get<string>('AWS_S3_BUCKET');
 
-    if (!accessKeyId || !secretAccessKey || !region || !bucketName) {
+    if (!region || !bucketName) {
       throw new Error('AWS configuration is missing');
     }
 
